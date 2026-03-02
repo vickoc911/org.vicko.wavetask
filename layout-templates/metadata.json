@@ -1,0 +1,22 @@
+{
+    "KPackageStructure": "Plasma/LayoutTemplate",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "davidedmundson@kde.org",
+                "Name": "David Edmundson"
+            }
+        ],
+        "Category": "",
+        "Description": "panel for plasmoid wavetask",
+        "EnabledByDefault": true,
+        "Id": "org.vicko.wavetask.panel",
+        "License": "LGPLv2+",
+        "Name": "panel for plasmoid wavetask",
+        "Website": "https://www.kde.org/plasma-desktop"
+    },
+    "X-Plasma-ContainmentCategories": [
+        "panel"
+    ],
+    "X-Plasma-Shell": "plasmashell"
+}
