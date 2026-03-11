@@ -10,6 +10,7 @@ Currently supported versions: 6.6.
 If you need to install it on Plasma 6.5 or lower, I recommend you do it from here: https://github.com/vickoc911/org.kde.plasma.wavetask
 
 ## Packages
+
 <details>
   <summary>openSUSE Tumbleweed</summary>
   <br>
@@ -19,6 +20,86 @@ If you need to install it on Plasma 6.5 or lower, I recommend you do it from her
   sudo zypper refresh
   sudo zypper install wavetask
   ```
+</details>
+
+<details>
+  <summary>Fedora</summary>
+  <br>
+  
+
+Since the widget needs to be compiled, installation requires building from source.
+
+Install the required packages:
+
+```bash
+sudo dnf install \
+extra-cmake-modules \
+qt6-qtbase-devel \
+qt6-qtdeclarative-devel \
+kf6-kcoreaddons-devel \
+kf6-kconfig-devel \
+kf6-kconfigwidgets-devel \
+kf6-knotifications-devel \
+kf6-kio-devel \
+kf6-kitemmodels-devel \
+libksysguard-devel \
+gcc-c++ \
+cmake
+```
+
+### Build Instructions
+
+Clone the repository:
+
+```bash
+git clone https://github.com/<repo>/org.kde.plasma.wavetask.git
+cd org.kde.plasma.wavetask
+```
+
+Create a build directory:
+
+```bash
+mkdir build
+cd build
+```
+
+Configure the project:
+
+```bash
+cmake ..
+```
+
+Compile:
+
+```bash
+make
+```
+
+Install:
+
+```bash
+sudo make install
+```
+
+---
+
+### Using the Widget
+
+After installation:
+
+1. Restart the Plasma shell:
+
+```
+kquitapp6 plasmashell
+kstart6 plasmashell
+```
+
+2. Right-click the panel
+3. Select **Add Widgets**
+4. Search for **WaveTask**
+
+Add it to the panel and adjust the settings as desired.
+
 </details>
 
 After installing the package, you just need to add the panel for wavetask

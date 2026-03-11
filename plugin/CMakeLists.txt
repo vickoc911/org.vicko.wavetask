@@ -22,7 +22,6 @@ find_package(KF6 REQUIRED COMPONENTS
 )
 
 # Workspace libs
-find_package(Plasma REQUIRED)
 find_package(PlasmaActivities REQUIRED)
 find_package(PlasmaActivitiesStats REQUIRED)
 find_package(LibTaskManager REQUIRED)
@@ -96,9 +95,9 @@ target_link_libraries(wavetask
         KF6::ConfigWidgets
         KF6::Notifications
         KF6::KIOCore KF6::KIOGui KF6::KIOFileWidgets KF6::Bookmarks
-        Plasma::Plasma Plasma::Activities Plasma::ActivitiesStats
+        Plasma::Activities Plasma::ActivitiesStats
         PW::LibTaskManager PW::LibNotificationManager
-        KSysGuard::ProcessCore
+	KSysGuard::ProcessCore
 )
 
 # -------------------------------------------------
