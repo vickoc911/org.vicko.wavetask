@@ -22,12 +22,12 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core DBus Qml Widgets)
 find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS I18n Service WindowSystem)
-find_package(Plasma ${KF6_MIN_VERSION} REQUIRED)
+find_package(Plasma5Support REQUIRED)
 find_package(PlasmaActivities ${KF6_MIN_VERSION} REQUIRED)
 find_package(KWin REQUIRED)
 
 add_subdirectory(plugin)
-plasma_install_package(package org.vicko.wavetask)
+#plasma_install_package(package org.vicko.wavetask)
 install(DIRECTORY layout-templates/
         DESTINATION ${KDE_INSTALL_DATADIR}/plasma/layout-templates/org.vicko.wavetask.panel
 )
