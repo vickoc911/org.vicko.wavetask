@@ -163,6 +163,10 @@
     <entry name="magnification" type="Double">
       <default>90.0</default>
     </entry>
+    <entry name="showReflection" type="Bool">
+      <label>Show a reflection of the icon below the dock</label>
+      <default>true</default>
+    </entry>
   </group>
 
 </kcfg>
