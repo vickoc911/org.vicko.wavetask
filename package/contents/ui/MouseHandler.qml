@@ -82,7 +82,7 @@ DropArea {
                     for (let i = 0; i < taskRepeater.count; i++) {
                         const taskDelegate = taskRepeater.itemAt(i);
                         if (taskDelegate?.index) {
-                            let { x, y } = mapToItem(taskDelegate, event.x, event.y);
+                            const { x, y } = mapToItem(taskDelegate, event.x, event.y);
 
                             const xIsWithinTask = (x >= 0 && x <= taskDelegate.width);
                             const yIsWithinTask = (y >= 0 && y <= taskDelegate.height);
