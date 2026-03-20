@@ -72,25 +72,46 @@ DropArea {
         }
 
         if (tasksModel.sortMode === TaskManager.TasksModel.SortManual && tasks.dragSource) {
-            // Reject drags between different TaskList instances.
-            if (tasks.dragSource.parent !== above.parent) {
-                return;
-            }
+            let targetTask = null;
 
-            const insertAt = above.index;
+            if (tasks.dragSource.parent === above.parent) {
+                targetTask = above;
+            } else {
+                const { taskRepeater } = tasks;
+                if (taskRepeater?.count) {
+                    for (let i = 0; i < taskRepeater.count; i++) {
+                        const taskDelegate = taskRepeater.itemAt(i);
+                        if (taskDelegate?.index) {
+                            let { x, y } = mapToItem(taskDelegate, event.x, event.y);
 
-            if (tasks.dragSource !== above && tasks.dragSource.index !== insertAt) {
-                if (tasks.groupDialog) {
-                    tasksModel.move(tasks.dragSource.index, insertAt,
-                        tasksModel.makeModelIndex(tasks.groupDialog.visualParent.index));
-                } else {
-                    tasksModel.move(tasks.dragSource.index, insertAt);
+                            const xIsWithinTask = (x >= 0 && x <= taskDelegate.width);
+                            const yIsWithinTask = (y >= 0 && y <= taskDelegate.height);
+
+                            if (xIsWithinTask && yIsWithinTask) {
+                                targetTask = taskDelegate;
+                                break;
+                            }
+                        }
+                    }
                 }
-
-                ignoredItem = above;
-                ignoreItemTimer.restart();
             }
-        } else if (!tasks.dragSource && hoveredItem !== above) {
+
+            if (targetTask?.index) {
+                if (tasks.dragSource !== targetTask && tasks.dragSource.index !== targetTask.index) {
+                    if (isGroupDialog) {
+                        const parentIndex = tasksModel.makeModelIndex(tasks.groupDialog.visualParent.index);
+                        tasksModel.move(tasks.dragSource.index, targetTask.index, parentIndex);
+                    } else {
+                        tasksModel.move(tasks.dragSource.index, targetTask.index);
+                    }
+
+                    ignoredItem = targetTask;
+                    ignoreItemTimer.restart();
+                }
+            }
+        }
+
+        if (!tasks.dragSource && hoveredItem !== above) {
             hoveredItem = above;
             activationTimer.restart();
         }

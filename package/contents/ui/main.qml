@@ -44,6 +44,7 @@ PlasmoidItem {
     readonly property Component pulseAudioComponent: Qt.createComponent("PulseAudio.qml")
 
     property alias taskList: taskList
+    property alias taskRepeater: taskRepeater
 
     preferredRepresentation: fullRepresentation
 
