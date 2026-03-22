@@ -44,6 +44,7 @@ PlasmoidItem {
     readonly property Component pulseAudioComponent: Qt.createComponent("PulseAudio.qml")
 
     property alias taskList: taskList
+    property alias taskRepeater: taskRepeater
 
     preferredRepresentation: fullRepresentation
 
@@ -713,7 +714,20 @@ PlasmoidItem {
                     onTriggered: {
                         if (!dockHoverHandler.hovered) {
                             taskList.insideDock = false;
-                            taskList.smoothMouseX = -1;
+                            cleanupTimer.restart();
+                        }
+                    }
+                }
+
+                // Limpiar las coordenadas del ratón SOLO CUANDO termine la animación de salida
+                Timer {
+                    id: cleanupTimer
+                    // 220 ms para cubrir de forma segura la animación Task.qml de 200 ms.
+                    interval: 220
+                    repeat: false
+                    onTriggered: {
+                        if (!dockMouseArea.containsMouse) {
+                            dockMouseArea.smoothMouseX = -1;
                         }
                     }
                 }

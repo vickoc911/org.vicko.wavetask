@@ -109,25 +109,30 @@ PlasmaCore.ToolTipArea {
         // Guardias de seguridad básicas
         if (!dockRef || _amplitude <= 0) return 1.0;
 
-        if (!dockRef.insideDock) return 1.0;
-
         let mX = dockRef.smoothMouseX;
         if (mX < 0) return 1.0;
 
-        // Distancia del mouse al centro del icono
-        let centerInDock = task.mapToItem(dockRef, _baseSize / 2, 0).x;
-        let distance = Math.abs(mX - centerInDock);
+        // Calculamos la distancia usando posiciones estáticas (sin zoom) para evitar bucles de retroalimentación en el layout
+        let totalWidth = tasksRoot.taskRepeater.count * _baseSize;
+        let centerOffset = (tasksRoot.taskList.width - totalWidth) / 2;
+        let iconCenter = centerOffset + (index * _baseSize) + (_baseSize / 2);
+
+        let distance = Math.abs(mX - iconCenter);
 
         // Si el mouse está muy lejos, no escalamos
         if (distance > _sigma * 3) return 1.0;
 
+        // Aplicamos la escala de entrada/salida a la amplitud
+        let dynamicAmplitude = _amplitude * entryProgress;
+
         // Curva tipo Gauss para suavizado estilo Mac
         //  return 1.0 + _amplitude * Math.exp(-Math.pow(distance / 1.2, 2) / (2 * Math.pow(_sigma, 2)));
-        return 1.0 + _amplitude * Math.exp(-(Math.pow(distance, 2) / (2 * Math.pow(_sigma, 2))));
+        return 1.0 + dynamicAmplitude * Math.exp(-(Math.pow(distance, 2) / (2 * Math.pow(_sigma, 2))));
     }
 
-    // Mantenemos el Behavior para que la transición al salir del dock sea suave
-    Behavior on zoomFactor {
+    property real entryProgress: (dockRef && dockRef.insideDock) ? 1.0 : 0.0
+
+    Behavior on entryProgress {
         NumberAnimation {
             duration: 200
             easing.type: Easing.OutCubic
