@@ -714,20 +714,6 @@ PlasmoidItem {
                     onTriggered: {
                         if (!dockHoverHandler.hovered) {
                             taskList.insideDock = false;
-                            cleanupTimer.restart();
-                        }
-                    }
-                }
-
-                // Limpiar las coordenadas del ratón SOLO CUANDO termine la animación de salida
-                Timer {
-                    id: cleanupTimer
-                    // 220 ms para cubrir de forma segura la animación Task.qml de 200 ms.
-                    interval: 220
-                    repeat: false
-                    onTriggered: {
-                        if (!dockMouseArea.containsMouse) {
-                            dockMouseArea.smoothMouseX = -1;
                         }
                     }
                 }
