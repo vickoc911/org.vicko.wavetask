@@ -169,7 +169,7 @@ KCMUtils.SimpleKCM {
                 snapMode: QQC2.Slider.SnapOnRelease
 
                 // El valor inicial vendrá de la configuración de Plasma
-                value: Plasmoid.configuration.amplitud || 1.4
+                value: Plasmoid.configuration.amplitud || 1.8
             }
 
             QQC2.Label {
