@@ -156,7 +156,7 @@ KCMUtils.SimpleKCM {
 
         // --- Selector de Amplitud ---
         RowLayout {
-            Kirigami.FormData.label: "Amplitud:"
+            Kirigami.FormData.label: "Amplitude:"
             spacing: Kirigami.Units.smallSpacing
 
             QQC2.Slider {
