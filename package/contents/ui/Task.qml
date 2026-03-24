@@ -98,7 +98,7 @@ PlasmaCore.ToolTipArea {
     property Item dockRef: null // Esto recibirá el 'dockMouseArea' de main.qml
 
     readonly property real _baseSize: Plasmoid.configuration.iconSize
-    readonly property real _sigma: _baseSize * 1.8
+    readonly property real _sigma: _baseSize * 1.4
     readonly property real _amplitude: (Plasmoid.configuration.magnification || 0) / 100
 
     // ---------------------------------------------------------
