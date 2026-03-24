@@ -516,7 +516,7 @@ PlasmoidItem {
                 id: internalCanvas
 
                 // Definimos cuánto queremos que crezca el fondo lateralmente
-                readonly property int expansionAmount: tasks.isZoomActive ? 74 : 0
+                readonly property int expansionAmount: tasks.isZoomActive ? (Plasmoid.configuration.iconSize * Plasmoid.configuration.amplitud)-4 : -(Plasmoid.configuration.iconSize * Plasmoid.configuration.amplitud)-10
 
                 // 2. CAPA DE FONDO
                 KSvg.FrameSvgItem {
@@ -577,8 +577,8 @@ PlasmoidItem {
 
                 // 1. Definimos propiedades para animar los laterales
                 // Si hay zoom, restamos un valor (ej. 20px) para que el fondo se extienda
-                property int dynamicLeftMargin: tasks.isZoomActive ? (tasks.skinParams.outLeft - 27) : tasks.skinParams.outLeft
-                property int dynamicRightMargin: tasks.isZoomActive ? (tasks.skinParams.outRight - 27) : tasks.skinParams.outRight
+                property int dynamicLeftMargin: tasks.isZoomActive ? (tasks.skinParams.outLeft - 26) : (tasks.skinParams.outLeft + (Plasmoid.configuration.iconSize * Plasmoid.configuration.amplitud)-26)
+                property int dynamicRightMargin: tasks.isZoomActive ? (tasks.skinParams.outRight - 26) : (tasks.skinParams.outRight + (Plasmoid.configuration.iconSize * Plasmoid.configuration.amplitud)-26)
 
                 anchors {
                     fill: parent
@@ -651,7 +651,7 @@ PlasmoidItem {
                 property alias animating: taskList.animating
 
 
-                width: Math.ceil(taskRepeater.count * (Plasmoid.configuration.iconSize +  14))  // 10 menos que la  altura del panel
+                width: Math.ceil(taskRepeater.count * (Plasmoid.configuration.iconSize +  (Plasmoid.configuration.iconSize * Plasmoid.configuration.amplitud)/4)) + 12
                 height: tasks.height
 
                 // 2. Calculamos el ancho real de todos los iconos sumados

@@ -98,8 +98,8 @@ PlasmaCore.ToolTipArea {
     property Item dockRef: null // Esto recibirá el 'dockMouseArea' de main.qml
 
     readonly property real _baseSize: Plasmoid.configuration.iconSize
-    readonly property real _sigma: _baseSize * 1.4
-    readonly property real _amplitude: (Plasmoid.configuration.magnification || 0) / 100
+    readonly property real _sigma: _baseSize * Plasmoid.configuration.amplitud
+    readonly property real _zoom: (Plasmoid.configuration.magnification || 0) / 100
 
     // ---------------------------------------------------------
     // INICIO DEL CÓDIGO ZOOM (OSX EFFECT)
@@ -107,7 +107,7 @@ PlasmaCore.ToolTipArea {
 
     property real zoomFactor: {
         // Guardias de seguridad básicas
-        if (!dockRef || _amplitude <= 0) return 1.0;
+        if (!dockRef || _zoom <= 0) return 1.0;
 
         let mX = dockRef.smoothMouseX;
         if (mX < 0) return 1.0;
@@ -123,11 +123,11 @@ PlasmaCore.ToolTipArea {
         if (distance > _sigma * 3) return 1.0;
 
         // Aplicamos la escala de entrada/salida a la amplitud
-        let dynamicAmplitude = _amplitude * entryProgress;
+        let dynamicZoom = _zoom * entryProgress;
 
         // Curva tipo Gauss para suavizado estilo Mac
-        //  return 1.0 + _amplitude * Math.exp(-Math.pow(distance / 1.2, 2) / (2 * Math.pow(_sigma, 2)));
-        return 1.0 + dynamicAmplitude * Math.exp(-(Math.pow(distance, 2) / (2 * Math.pow(_sigma, 2))));
+        //  return 1.0 + _zoom * Math.exp(-Math.pow(distance / 1.2, 2) / (2 * Math.pow(_sigma, 2)));
+        return 1.0 + dynamicZoom * Math.exp(-(Math.pow(distance, 2) / (2 * Math.pow(_sigma, 2))));
     }
 
     property real entryProgress: (dockRef && dockRef.insideDock) ? 1.0 : 0.0
