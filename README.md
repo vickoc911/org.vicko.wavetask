@@ -40,8 +40,19 @@ After installing the package, you just need to add the panel for wavetask
 - Icon reflection
 - Basic skin system
 - Option to select the icon size
-- option to select the zoom size
-- option to select the amplitude
+- Option to select the zoom size
+- Option to select the amplitude
+- Option to disable icon reflection
+
+Skins:
+
+- Default: draw the plasma theme
+- Big Sur Light
+- Big Sur Night
+- IVORY glass
+- No background
+- Vidrio
+- coffee
 
 What doesn't work:
 - For now, it only works in the bottom position
