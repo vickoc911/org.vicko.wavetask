@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.27)
 
 project(kara)
 
+set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Force system install prefix" FORCE)
+set(KDE_INSTALL_QMLDIR "/usr/lib/x86_64-linux-gnu/qt6/qml" CACHE PATH "Force Qt6 QML path for Debian" FORCE)
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -32,3 +35,11 @@ install(DIRECTORY layout-templates/
         DESTINATION ${KDE_INSTALL_DATADIR}/plasma/layout-templates/org.vicko.wavetask.panel
 )
 
+# --- Debian Packaging using CPack ---
+set(CPACK_GENERATOR "DEB")
+set(CPACK_PACKAGE_NAME "wavetask")
+set(CPACK_PACKAGE_VERSION "1.0.1")
+set(CPACK_PACKAGE_CONTACT "vicko")
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+include(CPack)

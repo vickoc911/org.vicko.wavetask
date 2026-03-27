@@ -1,0 +1,5 @@
+build/
+*.deb
+.DS_Store
+*.orig
+*~

@@ -131,15 +131,6 @@ PlasmoidItem {
       }
   }
 
-  // Detecta si entra zoom y si sale
-  readonly property bool isZoomActive: {
-      for (let i = 0; i < taskRepeater.count; ++i) {
-          let item = taskRepeater.itemAt(i);
-          // Si el zoomFactor es mayor a 1.0 (o un umbral mínimo como 1.01)
-          if (item && item.zoomFactor > 1.01) return true;
-      }
-      return false;
-  }
 
     Plasmoid.onUserConfiguringChanged: {
         if (Plasmoid.userConfiguring && groupDialog !== null) {
@@ -515,8 +506,6 @@ PlasmoidItem {
             Item {
                 id: internalCanvas
 
-                // Definimos cuánto queremos que crezca el fondo lateralmente
-                readonly property int expansionAmount: tasks.isZoomActive ? 42 : -(Plasmoid.configuration.iconSize * Plasmoid.configuration.amplitud)-42
                 // 2. CAPA DE FONDO
                 KSvg.FrameSvgItem {
                     id: backgroundItem
@@ -529,12 +518,15 @@ PlasmoidItem {
                     y: (Plasmoid.configuration.iconSize < 48) ? shadowItem.margins.top + 6 : shadowItem.margins.top - 4
 
                     // --- ANCHO Y POSICIÓN DINÁMICA ---
-                    width: (taskList.width - 24) + internalCanvas.expansionAmount
-                    x: 12 - (internalCanvas.expansionAmount / 2)
+                    // Logica de márgene dinámico para que el fondo siempre rodee a los iconos
+                    property int dynamicMargin: ((taskList.width - taskList.iconsTotalWidth) / 2) - 12
+                    
+                    width: taskList.iconsTotalWidth + 24
+                    x: (taskList.width - width) / 2
 
                     // Animaciones para suavizar el estiramiento
-                    Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                    Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                    Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
                     // Respetamos los hints del SVG
                     anchors.leftMargin: shadowItem.margins.left
@@ -555,12 +547,12 @@ PlasmoidItem {
                     y: (Plasmoid.configuration.iconSize < 48) ? 6 : -4
 
                     // --- ANCHO Y POSICIÓN DE SOMBRA DINÁMICA ---
-                    width: (taskList.width) + internalCanvas.expansionAmount
-                    x: 0 - (internalCanvas.expansionAmount / 2)
+                    width: backgroundItem.width + (shadowItem.margins.left + shadowItem.margins.right)
+                    x: backgroundItem.x - shadowItem.margins.left
 
                     // Animaciones para que la sombra siga al fondo suavemente
-                    Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                    Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                    Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 }
             }
         }
@@ -575,9 +567,10 @@ PlasmoidItem {
                 opacity: 1.0
 
                 // 1. Definimos propiedades para animar los laterales
-                // Si hay zoom, restamos un valor (ej. 20px) para que el fondo se extienda
-                property int dynamicLeftMargin: tasks.isZoomActive ? (tasks.skinParams.outLeft - 26) : (tasks.skinParams.outLeft + (Plasmoid.configuration.iconSize * Plasmoid.configuration.amplitud)-26)
-                property int dynamicRightMargin: tasks.isZoomActive ? (tasks.skinParams.outRight - 26) : (tasks.skinParams.outRight + (Plasmoid.configuration.iconSize * Plasmoid.configuration.amplitud)-26)
+                // Ahora usamos el ancho real de los iconos (iconsTotalWidth) para que el fondo
+                // se ajuste perfectamente y se expanda de forma fluida.
+                property int dynamicLeftMargin: ((taskList.width - taskList.iconsTotalWidth) / 2) + tasks.skinParams.outLeft - 8
+                property int dynamicRightMargin: ((taskList.width - taskList.iconsTotalWidth) / 2) + tasks.skinParams.outRight - 8
 
                 anchors {
                     fill: parent
@@ -591,10 +584,10 @@ PlasmoidItem {
 
                 // 3. Animamos ambos márgenes para un efecto suave de expansión
                 Behavior on dynamicLeftMargin {
-                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
                 }
                 Behavior on dynamicRightMargin {
-                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
                 }
 
                 source: tasks.skinParams.image
