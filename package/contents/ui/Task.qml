@@ -591,6 +591,44 @@ PlasmaCore.ToolTipArea {
         anchors.verticalCenterOffset: -5
         anchors.bottomMargin: 0
 
+        SequentialAnimation {
+            id: bounceAnimation
+            running: task.model.IsStartup || task.model.IsDemandingAttention || (task.smartLauncherItem && task.smartLauncherItem.urgent)
+            loops: Animation.Infinite
+            alwaysRunToEnd: true
+
+            // Calculamos la altura del salto considerando el factor de escala (zoom)
+            property real jumpHeight: {
+                let currentSize = Plasmoid.configuration.iconSize * zoomFactor;
+                let idealJump = currentSize * 0.6; // Salto base: 60% del tamaño del icono
+
+                // Calculamos el espacio disponible para evitar que el icono se corte con el borde del panel
+                let headroom = Math.max(0, tasksRoot.height - Plasmoid.configuration.iconSize);
+
+                // Limitamos el salto al espacio real disponible
+                return Math.min(idealJump, headroom);
+            }
+
+            // Animación de ascenso (impulso)
+            NumberAnimation {
+                target: iconBox
+                property: "anchors.bottomMargin"
+                from: 0
+                to: bounceAnimation.jumpHeight
+                duration: 300
+                easing.type: Easing.OutQuad
+            }
+
+            // Animación de descenso (gravedad)
+            NumberAnimation {
+                target: iconBox
+                property: "anchors.bottomMargin"
+                to: 0
+                duration: 300
+                easing.type: Easing.InQuad
+            }
+        }
+
         // Mantenemos el contenedor con un tamaño fijo
         width: Plasmoid.configuration.iconSize
         height: Plasmoid.configuration.iconSize
@@ -664,6 +702,9 @@ PlasmaCore.ToolTipArea {
             id: reflectionContainer
             // El reflejo nace de la base del icono fijo
             anchors.top: icon.bottom
+            // Si el ícono sube X, el reflejo baja X respecto al suelo (distancia total = 2X)
+            anchors.topMargin: iconBox.anchors.bottomMargin * 2
+
             anchors.horizontalCenter: icon.horizontalCenter
             anchors.horizontalCenterOffset: -4
 
