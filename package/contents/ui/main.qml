@@ -80,7 +80,7 @@ PlasmoidItem {
   // --- LÓGICA DE SKINS ---
   property int topoutimage: 0
   property var skinParams: ({
-      image: "", imagetask: "",
+      image: "", imagetask: "", blur: false, blurRadius: 18,
       left: 0, top: 0, right: 0, bottom: 0,
       outLeft: 0, outTop: 0, outRight: 0, outBottom: 0
   })
@@ -110,6 +110,8 @@ PlasmoidItem {
               tasks.skinParams = {
                   image: skinFolderUrl + config.image,
                   imagetask: skinFolderUrl + config.imagetask,
+                  blur: config.blur,
+                  blurRadius: config.blurRadius,
                   left: config.leftMargin,
                   top: config.topMargin,
                   right: config.rightMargin,
@@ -563,6 +565,49 @@ PlasmoidItem {
 
                     Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
                     Behavior on x    { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+                    // --- INTEGRACIÓN DEL BLUR ---
+
+                    // Definimos el radio del blur
+                     readonly property int blurRadius: tasks.skinParams.blurRadius || 18
+
+                    // Función que comunica con C++
+                    function updateBlur() {
+
+                        // Solo ejecutamos si el parámetro blur es true
+                        if (!tasks.skinParams.blur) {
+                            return;
+                        }
+                        // 'this' se refiere a backgroundItem.
+                        // Usamos mapToItem para obtener la posición real dentro de la ventana de Plasma
+                        var pos = mapToItem(null, 0, 0);
+
+                        backend.setBlurBehind(
+                            backgroundItem.Window.window, // La ventana del panel
+                            true,                         // Habilitar
+                            pos.x,                        // X global en la ventana
+                            pos.y,                        // Y global en la ventana
+                            width,
+                            height,
+                            blurRadius
+                        );
+                    }
+
+                    // Monitoreamos cambios en geometría para disparar el blur
+                    // Esto asegura que el blur siga la animación del 'Behavior'
+                    onWidthChanged: updateBlur()
+                    onHeightChanged: updateBlur()
+                    onXChanged: updateBlur()
+                    onYChanged: updateBlur()
+
+                    // IMPORTANTE: Limpiar el blur si el componente se destruye o el skin cambia
+                    Component.onDestruction: {
+                        if (dockBackground.Window.window) {
+                            backend.setBlurBehind(dockBackground.Window.window, false, 0, 0, 0, 0, 0);
+                        }
+                    }
+
+                    Component.onCompleted: updateBlur()
                 }
             }
         }
@@ -614,6 +659,52 @@ PlasmoidItem {
                 horizontalTileMode: BorderImage.Stretch
                 verticalTileMode: BorderImage.Stretch
                 z: -1
+
+
+                // --- INTEGRACIÓN DEL BLUR ---
+
+                // Radio de blur
+                readonly property int blurRadius: tasks.skinParams.blurRadius || 24
+
+                // Función centralizada para actualizar el blur
+                function updateBlur() {
+                    // Solo ejecutamos si el parámetro blur es true
+                    if (!tasks.skinParams.blur) {
+                        return;
+                    }
+
+                    // Calculamos la posición relativa a la ventana (QWindow)
+                    var pos = mapToItem(null, 0, 0);
+
+                    // Llamada al backend de C++
+                    // Importante: Asegúrate de que 'backend' sea accesible aquí
+                    backend.setBlurBehind(
+                        dockBackground.Window.window,
+                        true,
+                        pos.x,
+                        pos.y,
+                        dockBackground.width,  // El ancho real tras aplicar márgenes
+                        dockBackground.height, // El alto real tras aplicar márgenes
+                        blurRadius
+                    );
+                }
+
+                // --- CONEXIONES PARA ACTUALIZACIÓN DINÁMICA ---
+
+                // Cuando el componente termina de cargar
+                onXChanged: updateBlur()
+                onYChanged: updateBlur()
+                onWidthChanged: updateBlur()
+                onHeightChanged: updateBlur()
+
+                // IMPORTANTE: Limpiar el blur si el componente se destruye o el skin cambia
+                Component.onDestruction: {
+                    if (dockBackground.Window.window) {
+                        backend.setBlurBehind(dockBackground.Window.window, false, 0, 0, 0, 0, 0);
+                    }
+                }
+
+                Component.onCompleted: updateBlur()
             }
         }
 
