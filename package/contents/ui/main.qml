@@ -87,6 +87,14 @@ PlasmoidItem {
 
   function loadSkinConfig() {
       let skinName = Plasmoid.configuration.skinName || "default";
+
+      // LIMPIAR BLUR ANTES DE CAMBIAR
+      if (tasks.backend && tasks.parent && tasks.Window && tasks.Window.window) {
+          backend.setBlurBehind(tasks.Window.window, false, 0, 0, 0, 0, 0);
+          tasks.Window.window.requestUpdate();
+          console.log("Blur limpiado antes de aplicar nuevo skin");
+      }
+
       // Construimos la ruta al nuevo archivo Config.qml
       let configUrl = Qt.resolvedUrl("../skins/" + skinName + "/Config.qml");
 
@@ -574,40 +582,47 @@ PlasmoidItem {
                     // Función que comunica con C++
                     function updateBlur() {
 
-                        // Solo ejecutamos si el parámetro blur es true
                         if (!tasks.skinParams.blur) {
                             return;
                         }
-                        // 'this' se refiere a backgroundItem.
-                        // Usamos mapToItem para obtener la posición real dentro de la ventana de Plasma
+
+                        if (!backgroundItem.Window.window) {
+                            return;
+                        }
+
                         var pos = mapToItem(null, 0, 0);
 
                         backend.setBlurBehind(
-                            backgroundItem.Window.window, // La ventana del panel
-                            true,                         // Habilitar
-                            pos.x,                        // X global en la ventana
-                            pos.y,                        // Y global en la ventana
+                            backgroundItem.Window.window,
+                            true,
+                            pos.x,
+                            pos.y,
                             width,
                             height,
                             blurRadius
                         );
+
+                        // forzar repaint para que KWin aplique blur
+                        backgroundItem.Window.window.requestUpdate();
                     }
 
                     // Monitoreamos cambios en geometría para disparar el blur
-                    // Esto asegura que el blur siga la animación del 'Behavior'
-                    onWidthChanged: updateBlur()
-                    onHeightChanged: updateBlur()
-                    onXChanged: updateBlur()
-                    onYChanged: updateBlur()
+                    function scheduleBlurUpdate() {
+                        Qt.callLater(updateBlur)
+                    }
+
+                    onWidthChanged: scheduleBlurUpdate()
+                    onHeightChanged: scheduleBlurUpdate()
+                    onXChanged: scheduleBlurUpdate()
+                    onYChanged: scheduleBlurUpdate()
 
                     // IMPORTANTE: Limpiar el blur si el componente se destruye o el skin cambia
                     Component.onDestruction: {
-                        if (dockBackground.Window.window) {
-                            backend.setBlurBehind(dockBackground.Window.window, false, 0, 0, 0, 0, 0);
+                        if (backgroundItem.Window.window) {
+                            backend.setBlurBehind(backgroundItem.Window.window, false, 0, 0, 0, 0, 0);
                         }
                     }
-
-                    Component.onCompleted: updateBlur()
+                   Component.onCompleted: updateBlur()
                 }
             }
         }
@@ -673,6 +688,10 @@ PlasmoidItem {
                         return;
                     }
 
+                    if (!dockBackground.Window.window) {
+                        return;
+                    }
+
                     // Calculamos la posición relativa a la ventana (QWindow)
                     var pos = mapToItem(null, 0, 0);
 
@@ -687,15 +706,21 @@ PlasmoidItem {
                         dockBackground.height, // El alto real tras aplicar márgenes
                         blurRadius
                     );
+
+                    dockBackground.Window.window.requestUpdate();
                 }
 
                 // --- CONEXIONES PARA ACTUALIZACIÓN DINÁMICA ---
 
                 // Cuando el componente termina de cargar
-                onXChanged: updateBlur()
-                onYChanged: updateBlur()
-                onWidthChanged: updateBlur()
-                onHeightChanged: updateBlur()
+                function scheduleBlurUpdate() {
+                    Qt.callLater(updateBlur)
+                }
+
+                onWidthChanged: scheduleBlurUpdate()
+                onHeightChanged: scheduleBlurUpdate()
+                onXChanged: scheduleBlurUpdate()
+                onYChanged: scheduleBlurUpdate()
 
                 // IMPORTANTE: Limpiar el blur si el componente se destruye o el skin cambia
                 Component.onDestruction: {
@@ -704,7 +729,7 @@ PlasmoidItem {
                     }
                 }
 
-                Component.onCompleted: updateBlur()
+               Component.onCompleted: updateBlur()
             }
         }
 
