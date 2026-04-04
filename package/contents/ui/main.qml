@@ -553,8 +553,6 @@ PlasmoidItem {
 
                     width: internalCanvas.horizontalMargins + internalCanvas.baseIconsWidth + (internalCanvas.currentGrowth * 2)
 
-                    Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
-                    Behavior on x    { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
                 }
 
                 KSvg.FrameSvgItem {
@@ -571,8 +569,6 @@ PlasmoidItem {
 
                     width: internalCanvas.baseIconsWidth + (internalCanvas.currentGrowth * 2)
 
-                    Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
-                    Behavior on x    { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
                     // --- INTEGRACIÓN DEL BLUR ---
 
@@ -655,13 +651,6 @@ PlasmoidItem {
                     bottomMargin: tasks.skinParams.outBottom
                     leftMargin: dockBackground.dynamicLeftMargin
                     rightMargin: dockBackground.dynamicRightMargin
-                }
-
-                Behavior on dynamicLeftMargin {
-                    NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
-                }
-                Behavior on dynamicRightMargin {
-                    NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
                 }
 
                 source: tasks.skinParams.image
