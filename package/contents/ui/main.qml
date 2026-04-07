@@ -531,7 +531,7 @@ PlasmoidItem {
                 readonly property real baseIconsWidth: taskRepeater.count * Plasmoid.configuration.iconSize + Math.max(0, taskRepeater.count - 1) * taskList.spacing
 
                 // Crecimiento simétrico por zoom
-                readonly property real currentGrowth: Math.max(0, taskList.iconsTotalWidth - baseIconsWidth) / 2
+                readonly property real currentGrowth: Math.max(0, (taskList.iconsTotalWidth + taskList.spacing * 2) - baseIconsWidth) / 2
 
                 // Padding vertical proporcional al iconSize — escala en cualquier resolución
                 readonly property real verticalPadding: Plasmoid.configuration.iconSize * 0.15
