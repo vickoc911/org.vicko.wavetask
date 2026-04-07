@@ -88,6 +88,8 @@ Skins:
 - IVORY glass
 - No background
 - Vidrio
+- Tahoe
+- Tahoe Dark
 - coffee
 
 What doesn't work:
