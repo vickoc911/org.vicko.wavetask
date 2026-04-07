@@ -4,7 +4,7 @@ QtObject {
     property string image: "bg.png"
     property string imagetask: "tasks.svgz"
     property bool blur: true
-    property int blurRadius: 28
+    property int blurRadius: 24
     property int leftMargin: 20
     property int topMargin: 20
     property int rightMargin: 20
