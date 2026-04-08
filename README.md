@@ -14,7 +14,7 @@ If you need to install it on Plasma 6.5 or lower, I recommend you do it from her
 ## Packages
 
 <details>
-  <summary>openSUSE Tumbleweed</summary>
+  <summary>openSUSE Tumbleweed (maintained by me)</summary>
   <br>
   
   ```sh
@@ -24,7 +24,7 @@ If you need to install it on Plasma 6.5 or lower, I recommend you do it from her
   ```
 </details>
 <details>
-  <summary>Fedora 43, 42 (copr)</summary>
+  <summary>Fedora 43, 42 (copr) (maintained by me)</summary>
   <br>
   
   ```sh
@@ -33,7 +33,7 @@ If you need to install it on Plasma 6.5 or lower, I recommend you do it from her
   ```
 </details>
 <details>
-  <summary>kubuntu 25.10 ppa launchpad</summary>
+  <summary>kubuntu 25.10 ppa launchpad  (maintained by https://github.com/Matou1306)</summary>
   <br>
   
   ```sh
