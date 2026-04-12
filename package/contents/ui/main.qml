@@ -775,19 +775,14 @@ PlasmoidItem {
 
                 readonly property real totalWidth: tasks.taskRepeater.count * _baseSize
 
-                // Calcula valor aproximado de zoom con sigma
-                readonly property real maxZoom: 1.0 * Math.exp(-(Math.pow(0, 2) / (2 * Math.pow(_sigma, 2))))
-                readonly property real baseContentWidth: taskRepeater.count * Plasmoid.configuration.iconSize + Math.max(0, taskRepeater.count - 1) * spacing *3
-                readonly property real maxZoomedWidth: baseContentWidth + (maxZoom - 1.0) * Plasmoid.configuration.iconSize * taskRepeater.count * 0.5
+                readonly property real _zoom: (Plasmoid.configuration.magnification || 0) / 100
+                readonly property real maxZoom: 1.0 + (Plasmoid.configuration.magnification || 0) / 100
+                readonly property real baseContentWidth: taskRepeater.count * Plasmoid.configuration.iconSize + Math.max(0, taskRepeater.count - 1) * spacing
 
-                width: Math.ceil(Math.max(
-                        // Mínimo: ancho base + padding de centerOffset original
-                        taskRepeater.count * (Plasmoid.configuration.iconSize
-                        + (Plasmoid.configuration.iconSize * 1.5) / 4)
-                        + spacing * 3,
-                        // Máximo: ancho con zoom + mismo padding proporcional
-                        maxZoomedWidth * 1.3
-                    ))
+                // Gaussian integral
+                readonly property real zoomExtraWidth: _zoom * _sigma * Math.sqrt(2 * Math.PI)
+
+                width: Math.ceil(baseContentWidth + zoomExtraWidth + spacing * 4)
 
                 height: tasks.height
 
