@@ -507,7 +507,7 @@ Item {
 
     Timer {
         id: clickRecoveryTimer
-        interval: 1500
+        interval: 1200
         onTriggered: {
             cairoPenguinRoot.setState("splat")
             postClickTimer.interval = cairoPenguinRoot.stateDurationMs("splat")
