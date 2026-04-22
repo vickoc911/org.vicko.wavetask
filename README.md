@@ -25,7 +25,7 @@ If you need to install it on Plasma 6.5 or lower, I recommend you do it from her
   ```
 </details>
 <details>
-  <summary>Fedora 43, 42 (copr) (maintained by me)</summary>
+  <summary>Fedora 44, 43, 42 (copr) (maintained by me)</summary>
   <br>
   
   ```sh
