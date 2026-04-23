@@ -40,7 +40,6 @@ Item {
 
         actionLock = getCurrentState().isOneShot();
         if (actionLock) {
-            actionDoneTimer.interval = stateDurationMs(name);
             actionDoneTimer.restart();
         } else {
             actionDoneTimer.stop();
@@ -406,7 +405,7 @@ Item {
 
     Timer {
         id: actionDoneTimer
-        interval: 1000
+        interval: cairoPenguinRoot.stateDurationMs(cairoPenguinRoot.currentStateName)
         onTriggered: {
             cairoPenguinRoot.actionLock = false;
 
