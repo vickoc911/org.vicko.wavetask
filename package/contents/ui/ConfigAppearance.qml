@@ -38,6 +38,8 @@ KCMUtils.SimpleKCM {
     property string cfg_skinName: Plasmoid.configuration.skinName
     property alias cfg_showReflection: showReflection.checked
 
+    property alias cfg_cairoPenguinEnabled: cairoPenguinEnabled.checked
+
     Component.onCompleted: {
         /* Don't rely on bindings for checking the radiobuttons
            When checking forceStripes, the condition for the checked value for the allow stripes button
@@ -338,6 +340,12 @@ KCMUtils.SimpleKCM {
             visible: Kirigami.Settings.tabletMode
             text: i18nc("@info:usagetip under a set of radio buttons when Touch Mode is on", "Automatically set to Large when in Touch mode")
             font: Kirigami.Theme.smallFont
+        }
+
+        QQC2.CheckBox {
+            id: cairoPenguinEnabled
+            Kirigami.FormData.label: "Show Cairo Penguin:"
+            checked: Plasmoid.configuration.cairoPenguinEnabled
         }
     }
 }

@@ -876,6 +876,28 @@ PlasmoidItem {
                 }
             }
         }
+
+        // Gestiona la vinculación de propiedades una vez que el componente se carga en memoria.
+        Loader {
+            id: penguinLoader
+            active: Plasmoid.configuration.cairoPenguinEnabled
+            z: 999
+            anchors.bottom: parent.bottom
+
+            source: "CairoPenguin.qml"
+
+            // Pasa los enlaces (bindings) al componente cargado
+            onLoaded: {
+                let calculateMinX = () => taskList.x + taskList.centerOffset;
+                let calculateMaxX = () => calculateMinX() + taskList.iconsTotalWidth - item.width;
+
+                item.minX = Qt.binding(calculateMinX);
+                item.maxX = Qt.binding(calculateMaxX);
+            }
+        }
+
+        readonly property Component groupDialogComponent: Qt.createComponent("GroupDialog.qml")
+        property GroupDialog groupDialog
     }
 
     readonly property Component groupDialogComponent: Qt.createComponent("GroupDialog.qml")
