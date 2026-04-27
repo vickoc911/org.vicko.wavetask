@@ -102,6 +102,7 @@ sudo make install
 - Option to select the amplitude
 - Option to disable icon reflection
 - blur for default and custom skins
+- Cairo Penguin
 
 Skins:
 
