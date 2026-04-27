@@ -5,6 +5,7 @@ QtObject {
     property string imagetask: "tasks.svgz"
     property bool blur: false
     property int blurRadius: 28
+    property int positionTaskIndicator: 9
     property int leftMargin: 20
     property int topMargin: 20
     property int rightMargin: 20
