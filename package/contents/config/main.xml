@@ -158,7 +158,7 @@
       <default>default</default>
     </entry>
     <entry name="iconSize" type="Int">
-      <default>44</default>
+      <default>42</default>
     </entry>
     <entry name="magnification" type="Double">
       <default>90.0</default>
@@ -171,7 +171,7 @@
       <default>true</default>
     </entry>
     <entry name="cairoPenguinEnabled" type="Bool">
-      <default>true</default>
+      <default>false</default>
     </entry>
   </group>
 
