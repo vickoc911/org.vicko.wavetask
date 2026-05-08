@@ -57,7 +57,7 @@ PlasmoidItem {
 
   function lookForContainer(object, tries) {
       if (tries === 0 || object === null) return;
-      // Esta es la línea clave que dijiste que funciona
+      // busca el panel
       if (object.toString().indexOf("ContainmentItem_QML") > -1) {
           tasks.containmentItem = object;
           console.log("Contenedor encontrado en el intento: " + (depth - tries));
@@ -640,6 +640,7 @@ PlasmoidItem {
                 visible: source.toString() !== ""
                 opacity: 1.0
                 readonly property real spacing: Kirigami.Units.largeSpacing
+                readonly property real topMarginSkin: tasks.containmentItem.height - 76
 
                 // Cuánto crecieron los iconos con zoom respecto al base
                 readonly property real currentGrowth: Math.max(0, taskList.maxZoom + spacing * 8
@@ -655,7 +656,7 @@ PlasmoidItem {
 
                 anchors {
                     fill: parent
-                    topMargin: tasks.skinParams.outTop
+                    topMargin: tasks.skinParams.outTop + topMarginSkin
                     bottomMargin: tasks.skinParams.outBottom
                     leftMargin: dockBackground.dynamicLeftMargin
                     rightMargin: dockBackground.dynamicRightMargin
