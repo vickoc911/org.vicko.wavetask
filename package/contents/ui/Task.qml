@@ -513,10 +513,21 @@ id: translateTransform
     KSvg.FrameSvgItem {
         id: frame
 
+        property real jumpHeight: {
+            let currentSize = Plasmoid.configuration.iconSize * zoomFactor;
+            let idealJump = currentSize * 0.6; // Salto base: 60% del tamaño del icono
+
+            // Calculamos el espacio disponible para evitar que el icono se corte con el borde del panel
+            let headroom = Math.max(0, tasksRoot.height - Plasmoid.configuration.iconSize);
+
+            // Limitamos el salto al espacio real disponible
+            return Math.min(idealJump, headroom);
+        }
+
         anchors {
             fill: parent
 
-            topMargin: (!task.tasksRoot.vertical && taskList.rows > 1) ? LayoutMetrics.iconMargin : Math.round(parent.height - Plasmoid.configuration.iconSize) - Kirigami.Units.smallSpacing
+            topMargin: (!task.tasksRoot.vertical && taskList.rows > 1) ? LayoutMetrics.iconMargin : Math.round(parent.height - Plasmoid.configuration.iconSize * zoomFactor)
             bottomMargin: (!task.tasksRoot.vertical && taskList.rows > 1) ? LayoutMetrics.iconMargin : - Kirigami.Units.gridUnit / tasks.skinParams.positionTaskIndicator
             leftMargin: ((task.inPopup || task.tasksRoot.vertical) && taskList.columns > 1) ? LayoutMetrics.iconMargin : 0
             rightMargin: ((task.inPopup || task.tasksRoot.vertical) && taskList.columns > 1) ? LayoutMetrics.iconMargin : 0

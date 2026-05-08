@@ -18,7 +18,7 @@ Item {
     height: width
     anchors {
         top: frame.top
-        right: frame.right
+        right: iconBox.right
         rightMargin: taskFrame.margins.right
         topMargin: Math.round(taskFrame.margins.top * indicatorScale)
     }
@@ -127,8 +127,8 @@ Item {
         width: height
 
         anchors {
-            verticalCenter: parent.verticalCenter
-            horizontalCenter: parent.horizontalCenter
+            top: frame.top
+            topMargin: Math.round(taskFrame.margins.top * indicatorScale)
         }
 
         states: [
@@ -145,12 +145,12 @@ Item {
                 name: "horizontal"
                 when: frame.width > audioStreamIcon.requiredSpace
 
-                AnchorChanges {
+           /*     AnchorChanges {
                     target: audioStreamIconBox
 
                     anchors.top: undefined
-                    anchors.verticalCenter: frame.verticalCenter
-                }
+                    anchors.verticalCenter: parent.top
+                } */
 
                 PropertyChanges {
                     audioStreamIconBox.width: Kirigami.Units.iconSizes.roundedIconSize(Math.min(Math.min(iconBox.width, iconBox.height), Kirigami.Units.iconSizes.smallMedium))
