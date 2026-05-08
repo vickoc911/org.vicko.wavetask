@@ -513,27 +513,16 @@ id: translateTransform
     KSvg.FrameSvgItem {
         id: frame
 
-        property real jumpHeight: {
-            let currentSize = Plasmoid.configuration.iconSize * zoomFactor;
-            let idealJump = currentSize * 0.6; // Salto base: 60% del tamaño del icono
-
-            // Calculamos el espacio disponible para evitar que el icono se corte con el borde del panel
-            let headroom = Math.max(0, tasksRoot.height - Plasmoid.configuration.iconSize);
-
-            // Limitamos el salto al espacio real disponible
-            return Math.min(idealJump, headroom);
-        }
-
         anchors {
             fill: parent
 
-            topMargin: (!task.tasksRoot.vertical && taskList.rows > 1) ? LayoutMetrics.iconMargin : Math.round(parent.height - Plasmoid.configuration.iconSize * zoomFactor)
+            topMargin: (!task.tasksRoot.vertical && taskList.rows > 1) ? LayoutMetrics.iconMargin : Math.round(parent.height - Plasmoid.configuration.iconSize * zoomFactor) - Kirigami.Units.smallSpacing
             bottomMargin: (!task.tasksRoot.vertical && taskList.rows > 1) ? LayoutMetrics.iconMargin : - Kirigami.Units.gridUnit / tasks.skinParams.positionTaskIndicator
             leftMargin: ((task.inPopup || task.tasksRoot.vertical) && taskList.columns > 1) ? LayoutMetrics.iconMargin : 0
             rightMargin: ((task.inPopup || task.tasksRoot.vertical) && taskList.columns > 1) ? LayoutMetrics.iconMargin : 0
         }
 
-        imagePath: tasks.skinParams.imagetask
+        imagePath: (Plasmoid.configuration.skinName === "Default Plasma") ? "widgets/tasks" : tasks.skinParams.imagetask
         property bool isHovered: task.highlighted && Plasmoid.configuration.taskHoverEffect
         property string basePrefix: "normal"
         prefix: isHovered ? TaskTools.taskPrefixHovered(basePrefix, Plasmoid.location) : TaskTools.taskPrefix(basePrefix, Plasmoid.location)

@@ -86,7 +86,7 @@ PlasmoidItem {
   })
 
   function loadSkinConfig() {
-      let skinName = Plasmoid.configuration.skinName || "default";
+      let skinName = Plasmoid.configuration.skinName || "Default Plasma";
 
       // LIMPIAR BLUR ANTES DE CAMBIAR
       if (tasks.backend && tasks.parent && tasks.Window && tasks.Window.window) {
@@ -517,7 +517,7 @@ PlasmoidItem {
             id: backgroundLoader
 
             anchors.fill: parent
-            sourceComponent: (Plasmoid.configuration.skinName === "default") ? defaultSkin : customSkin
+            sourceComponent: (Plasmoid.configuration.skinName === "Default Plasma") ? defaultSkin : customSkin
         }
 
         // --- Componente 1: DEFAULT (SVG) ---
