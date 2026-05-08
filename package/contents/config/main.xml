@@ -155,7 +155,7 @@
     </entry>
     <entry name="skinName" type="String">
       <label> Skin.</label>
-      <default>default</default>
+      <default>Default Plasma</default>
     </entry>
     <entry name="iconSize" type="Int">
       <default>42</default>
