@@ -108,7 +108,7 @@ sudo make install
 
 Skins:
 
-- Default: draw the plasma theme
+- Default Plasma: draw the plasma theme
 - Big Sur Light
 - Big Sur Night
 - IVORY glass
@@ -123,7 +123,7 @@ Skins:
 What doesn't work:
 
 - For now, it only works in the bottom position
-- The panel has been resized to 76 pixels so that icons aren't cut off when zooming
+- The panel has been resized to 86 pixels so that icons aren't cut off when zooming
 
 ### ☕ Buy Me a Coffee!
 
