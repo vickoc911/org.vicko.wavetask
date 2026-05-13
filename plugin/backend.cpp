@@ -251,11 +251,13 @@ QVariantList Backend::placesActions(const QUrl &launcherUrl, bool showAllPlaces,
     QString previousGroup;
     QMenu *subMenu = nullptr;
 
-    std::unique_ptr<KFilePlacesModel> placesModel(new KFilePlacesModel());
-    for (int i = 0; i < placesModel->rowCount(); ++i) {
-        QModelIndex idx = placesModel->index(i, 0);
+    if (!m_placesModel) {
+        m_placesModel = std::make_unique<KFilePlacesModel>();
+    }
+    for (int i = 0; i < m_placesModel->rowCount(); ++i) {
+        QModelIndex idx = m_placesModel->index(i, 0);
 
-        if (placesModel->isHidden(idx)) {
+        if (m_placesModel->isHidden(idx)) {
             continue;
         }
 

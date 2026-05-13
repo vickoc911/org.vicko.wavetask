@@ -11,9 +11,13 @@
 #include <QObject>
 #include <QRect>
 
+#include <memory>
+
 #include <netwm.h>
 #include <qqmlregistration.h>
 #include <qwindowdefs.h>
+
+class KFilePlacesModel;
 
 #include "kactivitymanagerd_plugins_settings.h"
 
@@ -77,6 +81,10 @@ private:
 
     QActionGroup *m_actionGroup = nullptr;
     KActivities::Consumer *m_activitiesConsumer = nullptr;
+
+    // Cached on first call to placesActions(); KFilePlacesModel internally
+    // watches the user's bookmarks/mounts and keeps itself current.
+    std::unique_ptr<KFilePlacesModel> m_placesModel;
 
     KActivityManagerdPluginsSettings m_activityManagerPluginsSettings;
     KConfigWatcher::Ptr m_activityManagerPluginsSettingsWatcher;
