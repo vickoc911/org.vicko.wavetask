@@ -27,9 +27,19 @@ GridLayout {
 
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
 
-    readonly property real minimumWidth: children
-        .filter(item => item.visible && item.width > 0)
-        .reduce((minimumWidth, item) => Math.min(minimumWidth, item.width), Infinity)
+    // Smallest visible task width; consumed by Task.qml's standalone-icon
+    // state to clamp the icon box. Single-pass over `children` avoids the
+    // intermediate filtered array of the original `.filter().reduce()`.
+    readonly property real minimumWidth: {
+        let min = Infinity;
+        for (let i = 0; i < children.length; ++i) {
+            const item = children[i];
+            if (item.visible && item.width > 0 && item.width < min) {
+                min = item.width;
+            }
+        }
+        return min;
+    }
 
     readonly property int stripeCount: {
         if (Plasmoid.configuration.maxStripes === 1) {
