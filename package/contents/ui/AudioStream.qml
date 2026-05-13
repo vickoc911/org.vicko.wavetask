@@ -1,10 +1,8 @@
 /*
-    SPDX-FileCopyrightText: 2017 Kai Uwe Broulik <kde@privat.broulik.de>
-
-    SPDX-License-Identifier: GPL-2.0-or-later
-*/
-
-pragma ComponentBehavior: Bound
+ *    SPDX-FileCopyrightText: 2017 Kai Uwe Broulik <kde@privat.broulik.de>
+ *
+ *    SPDX-License-Identifier: GPL-2.0-or-later
+ */
 
 import QtQuick
 
@@ -15,14 +13,16 @@ import org.kde.ksvg as KSvg
 
 Item {
     id: audioStreamIconBox
+    parent: icon
 
     width: Math.round(Math.min(Math.min(iconBox.width, iconBox.height) * 0.4, Kirigami.Units.iconSizes.smallMedium))
     height: width
+
     anchors {
-        top: frame.top
-        right: iconBox.right
-        rightMargin: taskFrame.margins.right
-        topMargin: Math.round(taskFrame.margins.top * indicatorScale)
+        top: parent.top
+        right: parent.right
+        rightMargin: Math.round(indicatorScale) + (Kirigami.Units.smallSpacing * 2)
+        topMargin: Math.round(indicatorScale) + (Kirigami.Units.smallSpacing * 3)
     }
 
     readonly property real indicatorScale: 1.2
@@ -52,35 +52,35 @@ Item {
 
     transitions: [
         Transition {
-             from: ""
-             to: "playing"
-             SequentialAnimation {
-                 // Delay showing the play indicator so we don't flash it for brief sounds.
-                 PauseAnimation {
-                     duration: !task.delayAudioStreamIndicator || inPopup ? 0 : 2000
-                 }
-                 NumberAnimation {
-                     property: "opacity"
-                     duration: Kirigami.Units.longDuration
-                 }
-             }
+            from: ""
+            to: "playing"
+            SequentialAnimation {
+                // Delay showing the play indicator so we don't flash it for brief sounds.
+                PauseAnimation {
+                    duration: !task.delayAudioStreamIndicator || inPopup ? 0 : 2000
+                }
+                NumberAnimation {
+                    property: "opacity"
+                    duration: Kirigami.Units.longDuration
+                }
+            }
         },
         Transition {
-             from: ""
-             to: "muted"
-             SequentialAnimation {
-                 NumberAnimation {
-                     property: "opacity"
-                     duration: Kirigami.Units.longDuration
-                 }
-             }
+            from: ""
+            to: "muted"
+            SequentialAnimation {
+                NumberAnimation {
+                    property: "opacity"
+                    duration: Kirigami.Units.longDuration
+                }
+            }
         },
         Transition {
-             to: ""
-             NumberAnimation {
-                 property: "opacity"
-                 duration: Kirigami.Units.longDuration
-             }
+            to: ""
+            NumberAnimation {
+                property: "opacity"
+                duration: Kirigami.Units.longDuration
+            }
         }
     ]
 
@@ -120,65 +120,17 @@ Item {
 
         // Need audio indicator twice, to keep iconBox in the center.
         readonly property real requiredSpace: Math.min(iconBox.width, iconBox.height)
-            + Math.min(Math.min(iconBox.width, iconBox.height), Kirigami.Units.iconSizes.smallMedium) * 2
+        + Math.min(Math.min(iconBox.width, iconBox.height), Kirigami.Units.iconSizes.smallMedium) * 2
 
         source: "audio-volume-high-symbolic" + (Application.layoutDirection === Qt.RightToLeft ? "-rtl" : "")
         selected: tapHandler.pressed
 
-        height: Math.round(Math.min(parent.height * audioStreamIconBox.indicatorScale, Kirigami.Units.iconSizes.smallMedium))
+        height: Math.round(Plasmoid.configuration.iconSize * audioStreamIconBox.indicatorScale)
         width: height
 
         anchors {
-            top: frame.top
-            topMargin: Math.round(taskFrame.margins.top * indicatorScale)
+            verticalCenter: parent.verticalCenter
+            horizontalCenter: parent.horizontalCenter
         }
-
-        states: [
-            State {
-                name: "verticalIconsOnly"
-                when: tasks.vertical && frame.width < audioStreamIcon.requiredSpace
-
-                PropertyChanges {
-                    audioStreamIconBox.anchors.rightMargin: Math.round(taskFrame.margins.right * indicatorScale)
-                }
-            },
-
-            State {
-                name: "horizontal"
-                when: frame.width > audioStreamIcon.requiredSpace
-
-           /*     AnchorChanges {
-                    target: audioStreamIconBox
-
-                    anchors.top: undefined
-                    anchors.verticalCenter: parent.top
-                } */
-
-                PropertyChanges {
-                    audioStreamIconBox.width: Kirigami.Units.iconSizes.roundedIconSize(Math.min(Math.min(iconBox.width, iconBox.height), Kirigami.Units.iconSizes.smallMedium))
-                    audioStreamIcon.height: audioStreamIcon.parent.height
-                    audioStreamIcon.width: audioStreamIcon.parent.width
-                }
-            },
-
-            State {
-                name: "vertical"
-                when: frame.height > audioStreamIcon.requiredSpace
-
-                AnchorChanges {
-                    target: audioStreamIconBox
-
-                    anchors.right: undefined
-                    anchors.horizontalCenter: frame.horizontalCenter
-                }
-
-                PropertyChanges {
-                    audioStreamIconBox.anchors.topMargin: taskFrame.margins.top
-                    audioStreamIconBox.width: Kirigami.Units.iconSizes.roundedIconSize(Math.min(Math.min(iconBox.width, iconBox.height), Kirigami.Units.iconSizes.smallMedium))
-                    audioStreamIcon.height: audioStreamIcon.parent.height
-                    audioStreamIcon.width: audioStreamIcon.parent.width
-                }
-            }
-        ]
     }
 }
