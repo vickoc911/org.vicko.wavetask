@@ -17,7 +17,13 @@ import QtQuick.Layouts
 KCMUtils.SimpleKCM {
     id: root
 
-    readonly property bool plasmaPaAvailable: Qt.createComponent("PulseAudio.qml").status === Component.Ready
+    // Probes whether PulseAudio.qml (which imports org.kde.plasma.private.volume)
+    // can load; controls whether the audio-stream config options are enabled.
+    Component {
+        id: pulseAudioProbe
+        PulseAudio {}
+    }
+    readonly property bool plasmaPaAvailable: pulseAudioProbe.status === Component.Ready
     readonly property bool plasmoidVertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
     readonly property bool iconOnly: Plasmoid.pluginName === "org.vicko.wavetask"
 
