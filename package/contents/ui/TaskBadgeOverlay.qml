@@ -24,7 +24,7 @@ Item {
 
             anchors.right: parent.right
             anchors.rightMargin: -offset
-            y: root.shiftBadgeDown ? (icon.height / 4) : 0
+            y: root.shiftBadgeDown ? (icon.height / 2) : 0
 
             Behavior on y {
                 NumberAnimation { duration: Kirigami.Units.longDuration }
@@ -59,9 +59,9 @@ Item {
         id: shader
 
         anchors.top: parent.top
-        anchors.topMargin: (Kirigami.Units.smallSpacing * 0.6)
+        anchors.topMargin: (Kirigami.Units.smallSpacing * 0.7)
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: (Kirigami.Units.smallSpacing * 0.6)
+        anchors.bottomMargin: (Kirigami.Units.smallSpacing * 0.7)
         anchors.left: parent.left
         anchors.right: parent.right
 
