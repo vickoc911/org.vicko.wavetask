@@ -4,8 +4,6 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-pragma ComponentBehavior: Bound
-
 import QtQuick
 import org.kde.kirigami as Kirigami
 import org.kde.graphicaleffects as KGraphicalEffects
@@ -14,7 +12,7 @@ import org.kde.plasma.plasmoid
 Item {
     id: root
 
-    readonly property int iconWidthDelta: (Plasmoid.configuration.iconSize - icon.paintedWidth) / 2
+    readonly property int iconWidthDelta: (icon.width - icon.paintedWidth) / 4
     readonly property bool shiftBadgeDown: (Plasmoid.pluginName === "org.vicko.wavetask") && task.audioStreamIcon !== null
 
     Item {
@@ -26,7 +24,7 @@ Item {
 
             anchors.right: parent.right
             anchors.rightMargin: -offset
-            y: root.shiftBadgeDown ? (Plasmoid.configuration.iconSize / 2) : 0
+            y: root.shiftBadgeDown ? (icon.height / 4) : 0
 
             Behavior on y {
                 NumberAnimation { duration: Kirigami.Units.longDuration }
@@ -60,7 +58,16 @@ Item {
     KGraphicalEffects.BadgeEffect {
         id: shader
 
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.topMargin: (Kirigami.Units.smallSpacing * 0.6)
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: (Kirigami.Units.smallSpacing * 0.6)
+        anchors.left: parent.left
+        anchors.right: parent.right
+
+        width: icon.paintedWidth / 2
+        height: icon.paintedWidth / 2
+
         source: iconShaderSource
         mask: maskShaderSource
 
@@ -72,16 +79,17 @@ Item {
         id: badgeRect
 
         anchors.right: parent.right
+
         y: {
             const offset = Math.round(Math.max(Kirigami.Units.smallSpacing / 2, badgeMask.width / 32));
-            return offset + (root.shiftBadgeDown ? (Plasmoid.configuration.iconSize / 2) : 0);
+            return offset + (root.shiftBadgeDown ? (icon.height / 2) : 0);
         }
 
         Behavior on y {
             NumberAnimation { duration: Kirigami.Units.longDuration }
         }
 
-        height: Math.round(Plasmoid.configuration.iconSize * 0.45)
+        height: Math.round((icon.height/2) * 0.45)
         visible: task.smartLauncherItem.countVisible
         number: task.smartLauncherItem.count
     }
