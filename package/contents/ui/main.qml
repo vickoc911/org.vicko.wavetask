@@ -636,7 +636,9 @@ PlasmoidItem {
             id: customSkin
             BorderImage {
                 id: dockBackground
-                asynchronous: false
+                cache: true
+                smooth: true
+                asynchronous: true
                 visible: source.toString() !== ""
                 opacity: 1.0
                 readonly property real spacing: Kirigami.Units.largeSpacing
