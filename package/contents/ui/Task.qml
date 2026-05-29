@@ -106,27 +106,37 @@ PlasmaCore.ToolTipArea {
     // ---------------------------------------------------------
 
     property real zoomFactor: {
-        // Guardias de seguridad básicas
+
         if (!dockRef || _zoom <= 0) return 1.0;
 
-        let mX = dockRef.smoothMouseX;
-        if (mX < 0) return 1.0;
+        let mousePos = dockRef.smoothMouse;
 
-        // Calculamos la distancia usando posiciones estáticas (sin zoom) para evitar bucles de retroalimentación en el layout
-        let totalWidth = tasksRoot.taskRepeater.count * _baseSize;
-        let centerOffset = (tasksRoot.taskList.width - totalWidth) / 2;
+        if (mousePos < 0) return 1.0;
+
+        // Tamaño total SIN zoom
+        let totalSize = tasksRoot.taskRepeater.count * _baseSize;
+
+        // Área disponible según orientación
+        let availableSize = tasks.vertical
+        ? tasksRoot.taskList.height
+        : tasksRoot.taskList.width;
+
+        // Offset centrado
+        let centerOffset = (availableSize - totalSize) / 2;
+
+        // Centro del icono actual
         let iconCenter = centerOffset + (index * _baseSize) + (_baseSize / 2);
 
-        let distance = Math.abs(mX - iconCenter);
+        // Distancia mouse-icono
+        let distance = Math.abs(mousePos - iconCenter);
 
-        // Si el mouse está muy lejos, no escalamos
+        // Corte para rendimiento
         if (distance > _sigma * 3) return 1.0;
 
-        // Aplicamos la escala de entrada/salida a la amplitud
+        // Entrada/salida animada
         let dynamicZoom = _zoom * entryProgress;
 
-        // Curva tipo Gauss para suavizado estilo Mac
-        //  return 1.0 + _zoom * Math.exp(-Math.pow(distance / 1.2, 2) / (2 * Math.pow(_sigma, 2)));
+        // Curva gaussiana tipo macOS
         return 1.0 + dynamicZoom * Math.exp(-(Math.pow(distance, 2) / (2 * Math.pow(_sigma, 2))));
     }
 
@@ -513,13 +523,31 @@ id: translateTransform
     KSvg.FrameSvgItem {
         id: frame
 
-        anchors {
+          anchors {
             fill: parent
 
-            topMargin: (!task.tasksRoot.vertical && taskList.rows > 1) ? LayoutMetrics.iconMargin : Math.round(parent.height - Plasmoid.configuration.iconSize * zoomFactor) - Kirigami.Units.smallSpacing
-            bottomMargin: (!task.tasksRoot.vertical && taskList.rows > 1) ? LayoutMetrics.iconMargin : - Kirigami.Units.gridUnit / tasks.skinParams.positionTaskIndicator
-            leftMargin: ((task.inPopup || task.tasksRoot.vertical) && taskList.columns > 1) ? LayoutMetrics.iconMargin : Math.round(parent.width - Plasmoid.configuration.iconSize * zoomFactor) - (Kirigami.Units.smallSpacing * 0.6)
-            rightMargin: ((task.inPopup || task.tasksRoot.vertical) && taskList.columns > 1) ? LayoutMetrics.iconMargin : Math.round(parent.width - Plasmoid.configuration.iconSize * zoomFactor) - (Kirigami.Units.smallSpacing * 0.6)
+            topMargin: {
+                if (!task.tasksRoot.vertical && taskList.rows > 1) {
+                    return LayoutMetrics.iconMargin
+                }
+
+                let iconAlign = Math.round(parent.height - Plasmoid.configuration.iconSize * zoomFactor) - Kirigami.Units.smallSpacing
+                let indicatorOffset = -Kirigami.Units.gridUnit / tasks.skinParams.positionTaskIndicator
+
+                return tasksRoot.isTopPanel ? indicatorOffset : iconAlign
+            }
+            bottomMargin: {
+                if (!task.tasksRoot.vertical && taskList.rows > 1) {
+                    return LayoutMetrics.iconMargin
+                }
+
+                let iconAlign = Math.round(parent.height - Plasmoid.configuration.iconSize * zoomFactor) - Kirigami.Units.smallSpacing
+                let indicatorOffset = -Kirigami.Units.gridUnit / tasks.skinParams.positionTaskIndicator
+
+                return tasksRoot.isTopPanel ? iconAlign : indicatorOffset
+            }
+            leftMargin: ((inPopup || tasksRoot.vertical) && taskList.columns > 1) ? LayoutMetrics.iconMargin : Math.round(parent.width - Plasmoid.configuration.iconSize * zoomFactor) - Kirigami.Units.smallSpacing
+            rightMargin: ((inPopup || tasksRoot.vertical) && taskList.columns > 1) ? LayoutMetrics.iconMargin : Math.round(parent.width - Plasmoid.configuration.iconSize * zoomFactor) - Kirigami.Units.smallSpacing
         }
 
         imagePath: (Plasmoid.configuration.skinName === "Default Plasma") ? "widgets/tasks" : tasks.skinParams.imagetask
@@ -527,7 +555,6 @@ id: translateTransform
         property string basePrefix: "normal"
         prefix: isHovered ? TaskTools.taskPrefixHovered(basePrefix, Plasmoid.location) : TaskTools.taskPrefix(basePrefix, Plasmoid.location)
 
-        //     prefix: isHovered ? TaskTools.taskPrefixHovered(basePrefix, Plasmoid.location) : TaskTools.taskPrefix(basePrefix, Plasmoid.location)
 
         // Avoid repositioning delegate item after dragFinished
         DragHandler {
@@ -590,10 +617,25 @@ id: translateTransform
             width: Plasmoid.configuration.iconSize
             height: Plasmoid.configuration.iconSize
 
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
+           anchors.centerIn: tasksRoot.vertical
+           ? parent
+           : undefined
+
+           anchors.bottom: ((!tasksRoot.vertical) && Plasmoid.location === PlasmaCore.Types.BottomEdge)
+           ? parent.bottom
+           : undefined
+
+           anchors.top: ((!tasksRoot.vertical) && Plasmoid.location === PlasmaCore.Types.TopEdge)
+           ? parent.top
+           : undefined
+
+           anchors.horizontalCenter: (!tasksRoot.vertical)
+           ? parent.horizontalCenter
+           : undefined
+
+        //   parent.horizontalCenter
            // anchors.verticalCenterOffset: -5
-            anchors.bottomMargin: 0
+         //  anchors.bottomMargin: 0
 
             property int baseRenderSize: Plasmoid.configuration.iconSize * 2
 
@@ -637,7 +679,23 @@ id: translateTransform
 
             // El zoom se aplica solo como transformación visual al contenedor completo
             scale: zoomFactor
-            transformOrigin: Item.Bottom
+            transformOrigin: {
+                switch (Plasmoid.location) {
+                    case PlasmaCore.Types.BottomEdge:
+                        return Item.Bottom;
+
+                    case PlasmaCore.Types.TopEdge:
+                        return Item.Top;
+
+                    case PlasmaCore.Types.LeftEdge:
+                        return Item.Left;
+                    case PlasmaCore.Types.RightEdge:
+                        return Item.Right;
+
+                    default:
+                        return Item.Bottom;
+                }
+            }
 
             asynchronous: true
             active: task.smartLauncherItem && task.smartLauncherItem.countVisible
@@ -677,6 +735,74 @@ id: translateTransform
                 antialiasing: true
             }
 
+            Item {
+                id: reflectionContainer
+
+                visible: Plasmoid.configuration.showReflection
+                opacity: 0.4
+                clip: true
+                z: -1
+
+                width: tasksRoot.vertical
+                ? iconBox.width / 2
+                : iconBox.width
+
+                height: tasksRoot.vertical
+                ? iconBox.height
+                : iconBox.height / 2
+
+                x: {
+                    switch (Plasmoid.location) {
+
+                        case PlasmaCore.Types.LeftEdge:
+                            return -width - Kirigami.Units.smallSpacing
+
+                        case PlasmaCore.Types.RightEdge:
+                            return iconBox.width + Kirigami.Units.smallSpacing
+
+                        default:
+                            return 0
+                    }
+                }
+
+                y: {
+                    switch (Plasmoid.location) {
+
+                        case PlasmaCore.Types.TopEdge:
+                            return -height - Kirigami.Units.smallSpacing
+
+                        case PlasmaCore.Types.BottomEdge:
+                            return iconBox.height + Kirigami.Units.smallSpacing
+
+                        default:
+                            return 0
+                    }
+                }
+
+                Kirigami.Icon {
+                    id: reflectionIcon
+
+                    width: icon.width
+                    height: icon.height
+
+                    source: icon.source
+                    smooth: true
+                    antialiasing: true
+
+                    anchors.centerIn: parent
+
+                    scale: icon.scale
+
+                    transform: Scale {
+                        origin.x: reflectionIcon.width / 2
+                        origin.y: reflectionIcon.height / 2
+
+                        xScale: tasksRoot.vertical ? -1 : 1
+                        yScale: tasksRoot.vertical ? 1 : -1
+                    }
+                }
+            }
+
             states: [
                 // Using a state transition avoids a binding loop between label.visible and
                 // the text label margin, which derives from the icon width.
@@ -709,53 +835,9 @@ id: translateTransform
             }
         }
 
-        Item {
-            id: iconReflection   // para calculo preciso de reflejo
-
-            width: Plasmoid.configuration.iconSize
-            height: Plasmoid.configuration.iconSize
 
 
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            // anchors.verticalCenterOffset: -5
-            anchors.bottomMargin: 0
 
-        }
-        // REFLEJO FUERA DEL LOADER
-        Item {
-            id: reflectionContainer
-
-            anchors.top: iconReflection.bottom
-            anchors.horizontalCenter: iconReflection.horizontalCenter
-
-            width: iconReflection.width
-            height: iconReflection.height / 2
-
-            clip: true
-            opacity: 0.4
-            z: iconReflection.z - 1
-            visible: Plasmoid.configuration.showReflection
-
-            Kirigami.Icon {
-                id: reflectionIcon
-                width: Plasmoid.configuration.iconSize
-                height: Plasmoid.configuration.iconSize
-                // Usamos el mismo source con caché
-                source: icon.source
-                // cache: true
-                active: icon.active
-                smooth: true
-
-                y: -height
-                anchors.horizontalCenter: parent.horizontalCenter
-
-                transform: Scale {
-                    yScale: -1
-                    origin.y: Plasmoid.configuration.iconSize
-                }
-            }
-        }
 
     PlasmaComponents3.Label {
         id: label

@@ -46,6 +46,8 @@ PlasmoidItem {
     property alias taskList: taskList
     property alias taskRepeater: taskRepeater
 
+    readonly property bool isTopPanel: Plasmoid.location === PlasmaCore.Types.TopEdge
+
     preferredRepresentation: fullRepresentation
 
   //  Plasmoid.constraintHints: Plasmoid.CanFillArea
@@ -526,72 +528,124 @@ PlasmoidItem {
             Item {
                 id: internalCanvas
 
-                readonly property real horizontalMargins: shadowItem.margins.left + shadowItem.margins.right
+                readonly property bool vertical: tasks.vertical
 
-                // Ancho base fijo
-                readonly property real baseIconsWidth: taskRepeater.count * Plasmoid.configuration.iconSize + Math.max(0, taskRepeater.count - 1) * taskList.spacing
+                readonly property real horizontalMargins:
+                shadowItem.margins.left + shadowItem.margins.right
 
-                // Crecimiento simétrico por zoom
-                readonly property real currentGrowth: Math.max(0, (taskList.iconsTotalWidth + taskList.spacing * 2) - baseIconsWidth) / 2
+                readonly property real verticalMargins:
+                shadowItem.margins.top + shadowItem.margins.bottom
 
-                // Padding vertical proporcional al iconSize — escala en cualquier resolución
-                readonly property real verticalPadding: Plasmoid.configuration.iconSize * 0.20
+                readonly property real baseIconsSize:
+                taskRepeater.count * Plasmoid.configuration.iconSize +
+                Math.max(0, taskRepeater.count - 1) * taskList.spacing
+
+                readonly property real verticalOffsetX: -Kirigami.Units.smallSpacing * 5
+
+                readonly property real currentGrowth:
+                Math.max(
+                    0,
+                    (taskList.iconsTotalSize + taskList.spacing * 2)
+                    - baseIconsSize
+                ) / 2
+
+                readonly property real panelThickness:
+                Plasmoid.configuration.iconSize * 1.20
 
                 KSvg.FrameSvgItem {
                     id: shadowItem
+
                     imagePath: "widgets/panel-background"
                     prefix: "shadow"
+
                     z: -2
-                    anchors.horizontalCenter: parent.horizontalCenter
 
-                    readonly property real shadowExtra: shadowItem.margins.top + shadowItem.margins.bottom
-
-                    height: Plasmoid.configuration.iconSize + internalCanvas.verticalPadding + shadowExtra
-
-                    // Anclado al borde inferior del taskList
-                    y: taskList.spacing + taskList.height - height + shadowExtra/2
+                    width: vertical
+                    ? panelThickness + verticalMargins
+                    : horizontalMargins + baseIconsSize + (currentGrowth * 2) + Kirigami.Units.smallSpacing * 2
 
 
-                    width: internalCanvas.horizontalMargins + internalCanvas.baseIconsWidth + (internalCanvas.currentGrowth * 2)
+                    height: vertical
+                    ? baseIconsSize + (currentGrowth * 2) + verticalMargins
+                    : panelThickness + verticalMargins + Kirigami.Units.smallSpacing * 0.2
 
+                    x: {
+                        if (!vertical)
+                            return (parent.width - width) / 2;
+
+                        if (vertical && Plasmoid.location === PlasmaCore.Types.RightEdge)
+                            return taskList.width - width;
+
+                        return verticalOffsetX;
+                    }
+
+
+                    y: {
+                        if (vertical)
+                            return (parent.height - height) / 2;
+
+                        // Panel arriba
+                        if (tasks.isTopPanel)
+                            return - ((verticalMargins / 2) + Kirigami.Units.smallSpacing * 0.8);
+
+                        // Panel abajo
+                        return (taskList.height - height + (verticalMargins / 2)) + Kirigami.Units.smallSpacing * 0.6;
+                    }
                 }
 
                 KSvg.FrameSvgItem {
                     id: backgroundItem
+
                     imagePath: "widgets/panel-background"
                     prefix: ""
+
                     z: -1
-                    anchors.horizontalCenter: parent.horizontalCenter
 
-                    height: Plasmoid.configuration.iconSize + internalCanvas.verticalPadding
+                    width: vertical
+                    ? panelThickness
+                    : baseIconsSize + (currentGrowth * 2) + Kirigami.Units.smallSpacing * 2
 
-                    // y calculado desde abajo: borde inferior del fondo toca el borde inferior del panel
-                    y: taskList.spacing + taskList.height - height
+                    height: vertical
+                    ? baseIconsSize + (currentGrowth * 2)
+                    : panelThickness + Kirigami.Units.smallSpacing * 0.2
 
-                    width: internalCanvas.baseIconsWidth + (internalCanvas.currentGrowth * 2)
+                    x: {
+                        if (!vertical)
+                            return (parent.width - width) / 2;
 
+                        if (vertical && Plasmoid.location === PlasmaCore.Types.RightEdge)
+                            return taskList.width - width - (verticalMargins / 2);
 
-                    // --- INTEGRACIÓN DEL BLUR ---
+                        return (verticalMargins / 2) + verticalOffsetX;
+                    }
 
-                    // Definimos el radio del blur
-                     readonly property int blurRadius: tasks.skinParams.blurRadius || 18
+                    y: {
+                        if (vertical)
+                            return (parent.height - height) / 2;
 
-                    // Función que comunica con C++
+                        // Panel arriba
+                        if (tasks.isTopPanel)
+                            return - Kirigami.Units.smallSpacing * 0.8;
+
+                        // Panel abajo
+                       return (taskList.height - height) + Kirigami.Units.smallSpacing * 0.6;
+                    }
+
+                    readonly property int blurRadius:
+                    tasks.skinParams.blurRadius || 18
+
                     function updateBlur() {
-                        if (!tasks.skinParams.blur) {
+
+                        if (!tasks.skinParams.blur)
                             return;
-                        }
 
                         const win = backgroundItem?.Window?.window;
 
-                        if (!win) {
+                        if (!win)
                             return;
-                        }
 
-                        // opcional: proteger también visible
-                        if (typeof win.visible !== "undefined" && !win.visible) {
+                        if (typeof win.visible !== "undefined" && !win.visible)
                             return;
-                        }
 
                         var pos = mapToItem(null, 0, 0);
 
@@ -605,12 +659,10 @@ PlasmoidItem {
                             blurRadius
                         );
 
-                        if (win.requestUpdate) {
+                        if (win.requestUpdate)
                             win.requestUpdate();
-                        }
                     }
 
-                    // Monitoreamos cambios en geometría para disparar el blur
                     function scheduleBlurUpdate() {
                         Qt.callLater(updateBlur)
                     }
@@ -619,13 +671,11 @@ PlasmoidItem {
                     onHeightChanged: scheduleBlurUpdate()
                     onXChanged: scheduleBlurUpdate()
                     onYChanged: scheduleBlurUpdate()
-
                     onWindowChanged: scheduleBlurUpdate()
 
                     onVisibleChanged: {
-                        if (visible) {
+                        if (visible)
                             scheduleBlurUpdate()
-                        }
                     }
                 }
             }
@@ -658,10 +708,16 @@ PlasmoidItem {
 
                 anchors {
                     fill: parent
-                    topMargin: tasks.skinParams.outTop + topMarginSkin
-                    bottomMargin: tasks.skinParams.outBottom
-                    leftMargin: dockBackground.dynamicLeftMargin
-                    rightMargin: dockBackground.dynamicRightMargin
+                    leftMargin: dockBackground.dynamicLeftMargin || 0
+                    rightMargin: dockBackground.dynamicRightMargin || 0
+
+                    topMargin: tasks.isTopPanel
+                    ? (tasks.skinParams.outBottom || 0)
+                    : (tasks.skinParams.outTop + topMarginSkin || 0)
+
+                    bottomMargin: tasks.isTopPanel
+                    ? (tasks.skinParams.outTop + topMarginSkin || 0)
+                    : (tasks.skinParams.outBottom || 0)
                 }
 
                 source: tasks.skinParams.image
@@ -674,6 +730,14 @@ PlasmoidItem {
                 horizontalTileMode: BorderImage.Stretch
                 verticalTileMode: BorderImage.Stretch
                 z: -1
+
+                // Inversión visual de la imagen
+                transform: Scale {
+                    origin.x: width / 2
+                    origin.y: height / 2
+                    // Flip vertical si el panel está arriba (Location 3)
+                    yScale: tasks.isTopPanel ? -1 : 1
+                }
 
 
                 // --- INTEGRACIÓN DEL BLUR ---
@@ -759,6 +823,7 @@ PlasmoidItem {
             }
 
             LayoutMirroring.enabled: tasks.shouldBeMirrored(Plasmoid.configuration.reverseMode, Application.layoutDirection, tasks.vertical)
+
             anchors {
                 left: parent.left
                 top: parent.top
@@ -770,7 +835,7 @@ PlasmoidItem {
             TaskList {
                 id: taskList
 
-                property real smoothMouseX: -1
+                property real smoothMouse: -1
                 property bool insideDock: false
                 property alias animating: taskList.animating
                 readonly property real spacing: Kirigami.Units.smallSpacing
@@ -781,32 +846,64 @@ PlasmoidItem {
 
                 readonly property real _zoom: (Plasmoid.configuration.magnification || 0) / 100
                 readonly property real maxZoom: 1.0 + (Plasmoid.configuration.magnification || 0) / 100
-                readonly property real baseContentWidth: taskRepeater.count * Plasmoid.configuration.iconSize + Math.max(0, taskRepeater.count - 1) * spacing
 
-                // Gaussian integral
-                readonly property real zoomExtraWidth: _zoom * _sigma * Math.sqrt(2 * Math.PI)
+                readonly property real baseContentSize: taskRepeater.count * Plasmoid.configuration.iconSize + Math.max(0, taskRepeater.count - 1) * spacing
 
-                width: Math.ceil(baseContentWidth + zoomExtraWidth + spacing * 4)
+                // Integral gaussiana aproximada
+                readonly property real zoomExtraSize: _zoom * _sigma * Math.sqrt(2 * Math.PI)
 
-                height: tasks.height
+                property real contentSize: Math.ceil(baseContentSize + zoomExtraSize + spacing * 4)
 
-                // 2. Calculamos el ancho real de todos los iconos sumados
-                readonly property real iconsTotalWidth: {
-                    let total = 0;
-                    for (let i = 0; i < taskRepeater.count; ++i) {
-                        let item = taskRepeater.itemAt(i);
-                        if (item) {
-                            total += item.width;
-                            if (i > 0) total += spacing;
-                        }
+               readonly property real iconsTotalSize: {
+                   let total = 0;
+
+                   for (let i = 0; i < taskRepeater.count; ++i) {
+                       let item = taskRepeater.itemAt(i);
+
+                       if (item) {
+
+                           total += tasks.vertical
+                           ? item.height
+                           : item.width;
+
+                           if (i > 0)
+                               total += spacing;
+                       }
+                   }
+
+                   return total;
+               }
+
+               readonly property real centerOffset: {
+                   let availableSize = tasks.vertical
+                   ? height
+                   : width;
+
+                   return (availableSize - iconsTotalSize) / 2;
+               }
+
+                Layout.maximumWidth: contentSize
+                Layout.maximumHeight: contentSize
+
+                width: {
+                    if (tasks.vertical) {
+                        return Math.ceil(
+                            Plasmoid.configuration.iconSize *
+                            taskList.maxZoom +
+                            spacing * 4
+                        );
                     }
-                    return total;
+
+                    return contentSize;
                 }
 
-                // 3. El desplazamiento necesario para centrar el bloque
-                readonly property real centerOffset: (width - iconsTotalWidth) / 2
+                height: {
+                    if (tasks.vertical) {
+                        return contentSize;
+                    }
 
-                Layout.maximumWidth: width
+                    return tasks.height;
+                }
 
                 flow: {
                     if (tasks.vertical) {
@@ -827,11 +924,13 @@ PlasmoidItem {
                     onPointChanged: {
                         let mappedPos = taskList.mapToItem(tasks, point.position.x, point.position.y)
 
-                        if (taskList.smoothMouseX < 0) {
-                            taskList.smoothMouseX = mappedPos.x
+                        let mousePos = tasks.vertical ? mappedPos.y : mappedPos.x
+
+                        if (taskList.smoothMouse < 0) {
+                            taskList.smoothMouse = mousePos
                         } else {
-                            taskList.smoothMouseX +=
-                            (mappedPos.x - taskList.smoothMouseX) * 0.3
+                            taskList.smoothMouse +=
+                            (mousePos - taskList.smoothMouse) * 0.3
                         }
 
                         taskList.insideDock = true
@@ -867,15 +966,50 @@ PlasmoidItem {
                         dockRef: taskList
 
                         x: {
-                            let posX = taskList.centerOffset;
+                            if (tasks.vertical && Plasmoid.location === PlasmaCore.Types.RightEdge)
+                                return width;
+
+                            if (tasks.vertical)
+                                return -taskList.spacing * 2;
+
+                            return itemPos;
+                        }
+
+                        y: {
+                            if (tasks.vertical && Plasmoid.location === PlasmaCore.Types.TopEdge)
+                                return taskList.spacing;
+
+                            if (tasks.vertical)
+                                return itemPos;
+
+                            return taskList.height - height;
+                        }
+
+                        property real itemPos: {
+                            let pos = taskList.centerOffset;
+
                             for (let i = 0; i < index; ++i) {
                                 let previousItem = taskRepeater.itemAt(i);
-                                let w = previousItem ? previousItem.width : Plasmoid.configuration.iconSize;
-                                posX += w + taskList.spacing;
+
+                                let size = previousItem
+                                ? (tasks.vertical
+                                ? previousItem.height
+                                : previousItem.width)
+                                : Plasmoid.configuration.iconSize;
+
+                                pos += size + taskList.spacing;
                             }
-                            return posX;
+
+                            return pos;
                         }
-                        width: (Plasmoid.configuration.iconSize * zoomFactor)
+
+                        width: tasks.vertical
+                        ? Plasmoid.configuration.iconSize
+                        : (Plasmoid.configuration.iconSize * zoomFactor)
+
+                        height: tasks.vertical
+                        ? (Plasmoid.configuration.iconSize * zoomFactor)
+                        : undefined
                     }
                 }
             }
