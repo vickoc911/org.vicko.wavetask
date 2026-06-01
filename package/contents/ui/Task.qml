@@ -741,7 +741,7 @@ id: translateTransform
                 visible: Plasmoid.configuration.showReflection
                 opacity: 0.4
                 clip: true
-                z: -1
+                z: -5
 
                 width: tasksRoot.vertical
                 ? iconBox.width / 2
@@ -755,10 +755,10 @@ id: translateTransform
                     switch (Plasmoid.location) {
 
                         case PlasmaCore.Types.LeftEdge:
-                            return -width - Kirigami.Units.smallSpacing
+                            return -width - Kirigami.Units.smallSpacing * 2.5
 
                         case PlasmaCore.Types.RightEdge:
-                            return iconBox.width + Kirigami.Units.smallSpacing
+                            return iconBox.width + Kirigami.Units.smallSpacing * 2.5
 
                         default:
                             return 0

@@ -540,7 +540,7 @@ PlasmoidItem {
                 taskRepeater.count * Plasmoid.configuration.iconSize +
                 Math.max(0, taskRepeater.count - 1) * taskList.spacing
 
-                readonly property real verticalOffsetX: -Kirigami.Units.smallSpacing * 5
+                readonly property real verticalOffsetX: -Kirigami.Units.smallSpacing * 0.5
 
                 readonly property real currentGrowth:
                 Math.max(
@@ -574,9 +574,9 @@ PlasmoidItem {
                             return (parent.width - width) / 2;
 
                         if (vertical && Plasmoid.location === PlasmaCore.Types.RightEdge)
-                            return taskList.width - width;
+                            return (taskList.width - width) + Kirigami.Units.smallSpacing * 0.3;
 
-                        return verticalOffsetX;
+                        return - (verticalMargins/2 + Kirigami.Units.smallSpacing * 0.9);
                     }
 
 
@@ -614,9 +614,9 @@ PlasmoidItem {
                             return (parent.width - width) / 2;
 
                         if (vertical && Plasmoid.location === PlasmaCore.Types.RightEdge)
-                            return taskList.width - width - (verticalMargins / 2);
+                            return taskList.width - width - (verticalMargins / 2) + Kirigami.Units.smallSpacing * 0.3;
 
-                        return (verticalMargins / 2) + verticalOffsetX;
+                        return - (Kirigami.Units.smallSpacing * 0.9 );
                     }
 
                     y: {
@@ -970,7 +970,7 @@ PlasmoidItem {
                                 return width;
 
                             if (tasks.vertical)
-                                return -taskList.spacing * 2;
+                                return 0;
 
                             return itemPos;
                         }
@@ -982,7 +982,7 @@ PlasmoidItem {
                             if (tasks.vertical)
                                 return itemPos;
 
-                            return taskList.height - height;
+                            return 0;
                         }
 
                         property real itemPos: {
