@@ -1,9 +1,3 @@
-/*
- *   SPDX-FileCopyrightText: 2016 Kai Uwe Broulik <kde@privat.broulik.de>
- *
- *   SPDX-License-Identifier: GPL-2.0-or-later
- */
-
 import QtQuick
 import org.kde.kirigami as Kirigami
 import org.kde.graphicaleffects as KGraphicalEffects
@@ -11,88 +5,57 @@ import org.kde.plasma.plasmoid
 
 Item {
     id: root
+    enabled: false
 
-    // Safely retrieve the sibling icon object from the parent loader context
-    readonly property Item targetIcon: parent ? parent.visualIcon : null
-
-    readonly property int iconWidthDelta: targetIcon ? (targetIcon.width - targetIcon.paintedWidth) / 4 : 0
+    // Reflection Logic
+    readonly property bool reflectionEnabled: Plasmoid.configuration.showReflection || false
+    readonly property int reflectionOffset: reflectionEnabled ? -8 : 0
     readonly property bool shiftBadgeDown: (Plasmoid.pluginName === "org.vicko.wavetask") && task.audioStreamIcon !== null
 
+    // 1. THIS REMAINS VISIBLE: The actual icon sits here
+    // No ShaderEffectSource needed for the main icon.
+
+    // 2. THE BADGE MASK: Only defines the area for the badge
     Item {
         id: badgeMask
         anchors.fill: parent
 
         Rectangle {
-            readonly property int offset: Math.round(Math.max(Kirigami.Units.smallSpacing / 2, badgeMask.width / 32))
-
+            id: maskRect
             anchors.right: parent.right
-            anchors.rightMargin: -offset
-            y: root.shiftBadgeDown && root.targetIcon ? (root.targetIcon.height / 2) : 0
-
-            Behavior on y {
-                NumberAnimation { duration: Kirigami.Units.longDuration }
-            }
-
-            visible: task.smartLauncherItem.countVisible
-            width: badgeRect.width + offset * 2
-            height: badgeRect.height + offset * 2
-            radius: badgeRect.radius + offset * 2
-
-            onWidthChanged: maskShaderSource.scheduleUpdate()
-            onVisibleChanged: maskShaderSource.scheduleUpdate()
-            onYChanged: maskShaderSource.scheduleUpdate()
+            anchors.rightMargin: -Math.round(icon.width * 0.15)
+            y: (root.shiftBadgeDown ? (icon.height / 2) : -Math.round(icon.height * 0.10)) + root.reflectionOffset
+            width: Math.round(icon.width * 0.38)
+            height: Math.round(icon.height * 0.38)
+            radius: width / 2
         }
     }
 
-    ShaderEffectSource {
-        id: iconShaderSource
-        sourceItem: root.targetIcon
-        hideSource: GraphicsInfo.api !== GraphicsInfo.Software
-    }
-
+    // 3. THE SHADER: Only masks the badge area
     ShaderEffectSource {
         id: maskShaderSource
         sourceItem: badgeMask
         hideSource: true
-        live: false
+        live: true
     }
 
     KGraphicalEffects.BadgeEffect {
         id: shader
-
-        anchors.top: parent.top
-        anchors.topMargin: (Kirigami.Units.smallSpacing * 0.7)
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: (Kirigami.Units.smallSpacing * 0.7)
-        anchors.left: parent.left
-        anchors.right: parent.right
-
-        width: root.targetIcon ? root.targetIcon.paintedWidth / 2 : parent.width / 2
-        height: root.targetIcon ? root.targetIcon.paintedWidth / 2 : parent.height / 2
-
-        source: iconShaderSource
+        anchors.fill: parent // Fill parent to encompass the badge area
+        source: icon // Use the icon as the source for the shadow
         mask: maskShaderSource
-
-        onWidthChanged: maskShaderSource.scheduleUpdate()
-        onHeightChanged: maskShaderSource.scheduleUpdate()
     }
 
+    // 4. THE VISUAL BADGE: Rendered on top
     Badge {
         id: badgeRect
-
         anchors.right: parent.right
+        anchors.rightMargin: -Math.round(icon.width * 0.15)
+        y: (root.shiftBadgeDown ? (icon.height / 2) : -Math.round(icon.height * 0.10)) + root.reflectionOffset
 
-        y: {
-            const offset = Math.round(Math.max(Kirigami.Units.smallSpacing / 2, badgeMask.width / 32));
-            return offset + (root.shiftBadgeDown && root.targetIcon ? (root.targetIcon.height / 2) : 0);
-        }
-
-        Behavior on y {
-            NumberAnimation { duration: Kirigami.Units.longDuration }
-        }
-
-        height: root.targetIcon ? Math.round((root.targetIcon.height / 2) * 0.45) : 16
-        visible: task.smartLauncherItem.countVisible
+        scale: 0.5
+        height: Math.round(icon.height * 0.38)
         number: task.smartLauncherItem.count
+        visible: task.smartLauncherItem.countVisible
     }
 }
