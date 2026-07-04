@@ -1,8 +1,8 @@
 /*
-    SPDX-FileCopyrightText: 2012-2016 Eike Hein <hein@kde.org>
-
-    SPDX-License-Identifier: GPL-2.0-or-later
-*/
+ *   SPDX-FileCopyrightText: 2012-2016 Eike Hein <hein@kde.org>
+ *
+ *   SPDX-License-Identifier: GPL-2.0-or-later
+ */
 pragma ComponentBehavior: Bound
 
 import QtQuick
@@ -48,7 +48,7 @@ PlasmoidItem {
 
     readonly property bool metaKeyHeld: backend.metaKeyHeld
     readonly property bool metaFeaturesEnabled: Plasmoid.configuration.showOnMetaKey
-                                                || Plasmoid.configuration.showTaskNumbersOnMeta
+    || Plasmoid.configuration.showTaskNumbersOnMeta
 
     // --- META KEY DOCK VISIBILITY ---
     property bool metaShowActive: false
@@ -93,116 +93,116 @@ PlasmoidItem {
 
     preferredRepresentation: fullRepresentation
 
-  //  Plasmoid.constraintHints: Plasmoid.CanFillArea
+    //  Plasmoid.constraintHints: Plasmoid.CanFillArea
 
-  // --- LÓGICA DE TRANSPARENCIA ---
-  property Item containmentItem: null
-  readonly property int depth: 14
-  property bool isBackgroundDisabled: true
+    // --- LÓGICA DE TRANSPARENCIA ---
+    property Item containmentItem: null
+    readonly property int depth: 14
+    property bool isBackgroundDisabled: true
 
-  function lookForContainer(object, tries) {
-      if (tries === 0 || object === null) return;
-      // busca el panel
-      if (object.toString().indexOf("ContainmentItem_QML") > -1) {
-          tasks.containmentItem = object;
-          console.log("Contenedor encontrado en el intento: " + (depth - tries));
-          console.log("containment width:", tasks.containmentItem.width)
-          console.log("containment height:", tasks.containmentItem.height)
+    function lookForContainer(object, tries) {
+        if (tries === 0 || object === null) return;
+        // busca el panel
+        if (object.toString().indexOf("ContainmentItem_QML") > -1) {
+            tasks.containmentItem = object;
+            console.log("Contenedor encontrado en el intento: " + (depth - tries));
+            console.log("containment width:", tasks.containmentItem.width)
+            console.log("containment height:", tasks.containmentItem.height)
 
-      } else {
-          lookForContainer(object.parent, tries - 1);
-      }
-  }
+        } else {
+            lookForContainer(object.parent, tries - 1);
+        }
+    }
 
-  function applyBackgroundHint() {
-      if (tasks.containmentItem === null) lookForContainer(tasks.parent, depth);
-      if (tasks.containmentItem === null) return;
+    function applyBackgroundHint() {
+        if (tasks.containmentItem === null) lookForContainer(tasks.parent, depth);
+        if (tasks.containmentItem === null) return;
 
-      // Aplicamos el NoBackground (0) o Default (1)
-      tasks.containmentItem.Plasmoid.backgroundHints = (isBackgroundDisabled) ? 0 : 1;
+        // Aplicamos el NoBackground (0) o Default (1)
+        tasks.containmentItem.Plasmoid.backgroundHints = (isBackgroundDisabled) ? 0 : 1;
 
-      // También lo aplicamos al objeto raíz por si acaso
-      tasks.Plasmoid.backgroundHints = (isBackgroundDisabled) ? 0 : 1;
-  }
+        // También lo aplicamos al objeto raíz por si acaso
+        tasks.Plasmoid.backgroundHints = (isBackgroundDisabled) ? 0 : 1;
+    }
 
-  // --- LÓGICA DE SKINS ---
-  property int topoutimage: 0
-  property var skinParams: ({
-      imageTop: "", imageBottom: "", imageLeft: "", imageRight: "", imagetask: "", blur: false, blurRadius: 18, positionTaskIndicator: 9,
-      left: 0, top: 0, right: 0, bottom: 0,
-      outLeft: 0, outTop: 0, outRight: 0, outBottom: 0
-  })
+    // --- LÓGICA DE SKINS ---
+    property int topoutimage: 0
+    property var skinParams: ({
+        imageTop: "", imageBottom: "", imageLeft: "", imageRight: "", imagetask: "", blur: false, blurRadius: 18, positionTaskIndicator: 9,
+        left: 0, top: 0, right: 0, bottom: 0,
+        outLeft: 0, outTop: 0, outRight: 0, outBottom: 0
+    })
 
-  function loadSkinConfig() {
-      let skinName = Plasmoid.configuration.skinName || "Default Plasma";
+    function loadSkinConfig() {
+        let skinName = Plasmoid.configuration.skinName || "Default Plasma";
 
-      // LIMPIAR BLUR ANTES DE CAMBIAR
-      if (tasks.backend && tasks.parent && tasks.Window && tasks.Window.window) {
-          backend.setBlurBehind(tasks.Window.window, false, 0, 0, 0, 0, 0);
-          tasks.Window.window.requestUpdate();
-          console.log("Blur limpiado antes de aplicar nuevo skin");
-      }
+        // LIMPIAR BLUR ANTES DE CAMBIAR
+        if (tasks.backend && tasks.parent && tasks.Window && tasks.Window.window) {
+            backend.setBlurBehind(tasks.Window.window, false, 0, 0, 0, 0, 0);
+            tasks.Window.window.requestUpdate();
+            console.log("Blur limpiado antes de aplicar nuevo skin");
+        }
 
-      // Construimos la ruta al nuevo archivo Config.qml
-      let configUrl = Qt.resolvedUrl("../skins/" + skinName + "/Config.qml");
+        // Construimos la ruta al nuevo archivo Config.qml
+        let configUrl = Qt.resolvedUrl("../skins/" + skinName + "/Config.qml");
 
-      console.log("Cargando configuración de skin desde: " + configUrl);
+        console.log("Cargando configuración de skin desde: " + configUrl);
 
-      let component = Qt.createComponent(configUrl);
+        let component = Qt.createComponent(configUrl);
 
-      if (Plasmoid.configuration.iconSize <= 44) {
-          tasks.topoutimage = Math.abs(Plasmoid.configuration.iconSize - 44);
-      } else {
-          tasks.topoutimage = 44 - Plasmoid.configuration.iconSize;
-      }
+        if (Plasmoid.configuration.iconSize <= 44) {
+            tasks.topoutimage = Math.abs(Plasmoid.configuration.iconSize - 44);
+        } else {
+            tasks.topoutimage = 44 - Plasmoid.configuration.iconSize;
+        }
 
-      if (component.status === Component.Ready) {
-          let config = component.createObject(tasks); // 'tasks' es el id de tu PlasmoidItem
+        if (component.status === Component.Ready) {
+            let config = component.createObject(tasks); // 'tasks' es el id de tu PlasmoidItem
 
-          if (config) {
-              let skinFolderUrl = Qt.resolvedUrl("../skins/" + skinName + "/").toString();
+            if (config) {
+                let skinFolderUrl = Qt.resolvedUrl("../skins/" + skinName + "/").toString();
 
-              // Actualizamos skinParams de forma reactiva
-              tasks.skinParams = {
-                  imageTop: skinFolderUrl + config.imageTop,
-                  imageBottom: skinFolderUrl + config.imageBottom,
-                  imageLeft: skinFolderUrl + config.imageLeft,
-                  imageRight: skinFolderUrl + config.imageRight,
-                  image: skinFolderUrl + config.image,
-                  imagetask: skinFolderUrl + config.imagetask,
-                  blur: config.blur,
-                  blurRadius: config.blurRadius,
-                  positionTaskIndicator: config.positionTaskIndicator,
-                  left: config.leftMargin,
-                  top: config.topMargin,
-                  right: config.rightMargin,
-                  bottom: config.bottomMargin,
-                  outLeft: config.outsideLeftMargin,
-                  outTop: config.outsideTopMargin + tasks.topoutimage,
-                  outRight: config.outsideRightMargin,
-                  outBottom: config.outsideBottomMargin
-              };
+                // Actualizamos skinParams de forma reactiva
+                tasks.skinParams = {
+                    imageTop: skinFolderUrl + config.imageTop,
+                    imageBottom: skinFolderUrl + config.imageBottom,
+                    imageLeft: skinFolderUrl + config.imageLeft,
+                    imageRight: skinFolderUrl + config.imageRight,
+                    image: skinFolderUrl + config.image,
+                    imagetask: skinFolderUrl + config.imagetask,
+                    blur: config.blur,
+                    blurRadius: config.blurRadius,
+                    positionTaskIndicator: config.positionTaskIndicator,
+                    left: config.leftMargin,
+                    top: config.topMargin,
+                    right: config.rightMargin,
+                    bottom: config.bottomMargin,
+                    outLeft: config.outsideLeftMargin,
+                    outTop: config.outsideTopMargin + tasks.topoutimage,
+                    outRight: config.outsideRightMargin,
+                    outBottom: config.outsideBottomMargin
+                };
 
-              console.log("EXITO: Skin '" + skinName + "' cargada. Imagen: " + tasks.skinParams.image);
+                console.log("EXITO: Skin '" + skinName + "' cargada. Imagen: " + tasks.skinParams.image);
 
-              // Limpiamos el objeto temporal de memoria
-              config.destroy();
-          }
-      } else {
-          console.log("ERROR al cargar Config.qml: " + component.errorString());
-          // Fallback: Si no existe el .qml, podrías intentar cargar valores por defecto aquí
-      }
-  }
+                // Limpiamos el objeto temporal de memoria
+                config.destroy();
+            }
+        } else {
+            console.log("ERROR al cargar Config.qml: " + component.errorString());
+            // Fallback: Si no existe el .qml, podrías intentar cargar valores por defecto aquí
+        }
+    }
 
-  // Detecta si entra zoom y si sale
-  readonly property bool isZoomActive: {
-      for (let i = 0; i < taskRepeater.count; ++i) {
-          let item = taskRepeater.itemAt(i);
-          // Si el zoomFactor es mayor a 1.0 (o un umbral mínimo como 1.01)
-          if (item && item.zoomFactor > 1.01) return true;
-      }
-      return false;
-  }
+    // Detecta si entra zoom y si sale
+    readonly property bool isZoomActive: {
+        for (let i = 0; i < taskRepeater.count; ++i) {
+            let item = taskRepeater.itemAt(i);
+            // Si el zoomFactor es mayor a 1.0 (o un umbral mínimo como 1.01)
+            if (item && item.zoomFactor > 1.01) return true;
+        }
+        return false;
+    }
 
     Plasmoid.onUserConfiguringChanged: {
         if (Plasmoid.userConfiguring && groupDialog !== null) {
@@ -225,7 +225,7 @@ PlasmoidItem {
         return !vertical ? 0 : LayoutMetrics.preferredMinHeight();
     }
 
-//BEGIN TODO: this is not precise enough: launchers are smaller than full tasks
+    //BEGIN TODO: this is not precise enough: launchers are smaller than full tasks
     Layout.preferredWidth: {
         if (shouldShrinkToZero) {
             return 0.01;
@@ -244,7 +244,7 @@ PlasmoidItem {
         }
         return Kirigami.Units.gridUnit * 2;
     }
-//END TODO
+    //END TODO
 
     property Item dragSource
 
@@ -284,7 +284,7 @@ PlasmoidItem {
 
             if (!task.model.IsLauncher && !task.model.IsStartup) {
                 tasksModel.requestPublishDelegateGeometry(tasksModel.makeModelIndex(task.index),
-                    backend.globalRect(task), task);
+                                                          backend.globalRect(task), task);
             }
         }
     }
@@ -328,15 +328,15 @@ PlasmoidItem {
             if (!tasks.iconsOnly && !Plasmoid.configuration.separateLaunchers
                 && Plasmoid.configuration.sortingStrategy === 1) {
                 return false;
-            }
+                }
 
-            return true;
+                return true;
         }
 
         groupMode: groupModeEnumValue(Plasmoid.configuration.groupingStrategy)
         groupInline: !Plasmoid.configuration.groupPopups && !tasks.iconsOnly
         groupingWindowTasksThreshold: (Plasmoid.configuration.onlyGroupWhenFull && !tasks.iconsOnly
-            ? LayoutMetrics.optimumCapacity(tasks.width, tasks.height) + 1 : -1)
+        ? LayoutMetrics.optimumCapacity(tasks.width, tasks.height) + 1 : -1)
 
         onLauncherListChanged: {
             Plasmoid.configuration.launchers = launcherList;
@@ -352,30 +352,30 @@ PlasmoidItem {
 
         function sortModeEnumValue(index: int): /*TaskManager.TasksModel.SortMode*/ int {
             switch (index) {
-            case 0:
-                return TaskManager.TasksModel.SortDisabled;
-            case 1:
-                return TaskManager.TasksModel.SortManual;
-            case 2:
-                return TaskManager.TasksModel.SortAlpha;
-            case 3:
-                return TaskManager.TasksModel.SortVirtualDesktop;
-            case 4:
-                return TaskManager.TasksModel.SortActivity;
-            // 5 is SortLastActivated, skipped
-            case 6:
-                return TaskManager.TasksModel.SortWindowPositionHorizontal;
-            default:
-                return TaskManager.TasksModel.SortDisabled;
+                case 0:
+                    return TaskManager.TasksModel.SortDisabled;
+                case 1:
+                    return TaskManager.TasksModel.SortManual;
+                case 2:
+                    return TaskManager.TasksModel.SortAlpha;
+                case 3:
+                    return TaskManager.TasksModel.SortVirtualDesktop;
+                case 4:
+                    return TaskManager.TasksModel.SortActivity;
+                    // 5 is SortLastActivated, skipped
+                case 6:
+                    return TaskManager.TasksModel.SortWindowPositionHorizontal;
+                default:
+                    return TaskManager.TasksModel.SortDisabled;
             }
         }
 
         function groupModeEnumValue(index: int): /*TaskManager.TasksModel.GroupMode*/ int {
             switch (index) {
-            case 0:
-                return TaskManager.TasksModel.GroupDisabled;
-            case 1:
-                return TaskManager.TasksModel.GroupApplications;
+                case 0:
+                    return TaskManager.TasksModel.GroupDisabled;
+                case 1:
+                    return TaskManager.TasksModel.GroupApplications;
             }
         }
 
@@ -453,6 +453,11 @@ PlasmoidItem {
 
     Item {
         anchors.fill: parent
+
+        // Pushes everything down slightly when docked at the absolute bottom
+        transform: Translate {
+            y: (Plasmoid.location === PlasmaCore.Types.BottomEdge) ? 12 : 0
+        }
 
         TaskManager.VirtualDesktopInfo {
             id: virtualDesktopInfo
@@ -693,7 +698,7 @@ PlasmoidItem {
                             return - Kirigami.Units.smallSpacing * 0.8;
 
                         // Panel abajo
-                       return (taskList.height - height) + Kirigami.Units.smallSpacing * 0.6;
+                        return (taskList.height - height) + Kirigami.Units.smallSpacing * 0.6;
                     }
 
                     readonly property int blurRadius:
@@ -806,17 +811,17 @@ PlasmoidItem {
                     : (tasks.skinParams.outBottom || 0))
                 }
 
-              source: {
-                  if (tasks.vertical) {
-                      return tasks.isLeftPanel
-                      ? tasks.skinParams.imageLeft
-                      : tasks.skinParams.imageRight;
-                  }
+                source: {
+                    if (tasks.vertical) {
+                        return tasks.isLeftPanel
+                        ? tasks.skinParams.imageLeft
+                        : tasks.skinParams.imageRight;
+                    }
 
-                  return tasks.isTopPanel
-                  ? tasks.skinParams.imageTop
-                  : tasks.skinParams.imageBottom;
-              }
+                    return tasks.isTopPanel
+                    ? tasks.skinParams.imageTop
+                    : tasks.skinParams.imageBottom;
+                }
 
                 border {
                     left: tasks.vertical
@@ -869,9 +874,9 @@ PlasmoidItem {
 
                     var pos = mapToItem(null, 0, 0);
 
-                /*    if (tasks.vertical && !tasks.isLeftPanel) {
-                        pos = mapToItem(null, - Kirigami.Units.smallSpacing * 3, 0);
-                    } */
+                    /*    if (tasks.vertical && !tasks.isLeftPanel) {
+                     *                       pos = mapToItem(null, - Kirigami.Units.smallSpacing * 3, 0);
+                } */
 
                     backend.setBlurBehind(
                         win,
@@ -918,16 +923,16 @@ PlasmoidItem {
 
             edge: {
                 switch (Plasmoid.location) {
-                case PlasmaCore.Types.BottomEdge:
-                    return Qt.TopEdge;
-                case PlasmaCore.Types.TopEdge:
-                    return Qt.BottomEdge;
-                case PlasmaCore.Types.LeftEdge:
-                    return Qt.RightEdge;
-                case PlasmaCore.Types.RightEdge:
-                    return Qt.LeftEdge;
-                default:
-                    return Qt.TopEdge;
+                    case PlasmaCore.Types.BottomEdge:
+                        return Qt.TopEdge;
+                    case PlasmaCore.Types.TopEdge:
+                        return Qt.BottomEdge;
+                    case PlasmaCore.Types.LeftEdge:
+                        return Qt.RightEdge;
+                    case PlasmaCore.Types.RightEdge:
+                        return Qt.LeftEdge;
+                    default:
+                        return Qt.TopEdge;
                 }
             }
 
@@ -963,33 +968,33 @@ PlasmoidItem {
 
                 property real contentSize: Math.ceil(baseContentSize + zoomExtraSize + spacing * 4)
 
-               readonly property real iconsTotalSize: {
-                   let total = 0;
+                readonly property real iconsTotalSize: {
+                    let total = 0;
 
-                   for (let i = 0; i < taskRepeater.count; ++i) {
-                       let item = taskRepeater.itemAt(i);
+                    for (let i = 0; i < taskRepeater.count; ++i) {
+                        let item = taskRepeater.itemAt(i);
 
-                       if (item) {
+                        if (item) {
 
-                           total += tasks.vertical
-                           ? item.height
-                           : item.width;
+                            total += tasks.vertical
+                            ? item.height
+                            : item.width;
 
-                           if (i > 0)
-                               total += spacing;
-                       }
-                   }
+                            if (i > 0)
+                                total += spacing;
+                        }
+                    }
 
-                   return total;
-               }
+                    return total;
+                }
 
-               readonly property real centerOffset: {
-                   let availableSize = tasks.vertical
-                   ? height
-                   : width;
+                readonly property real centerOffset: {
+                    let availableSize = tasks.vertical
+                    ? height
+                    : width;
 
-                   return (availableSize - iconsTotalSize) / 2;
-               }
+                    return (availableSize - iconsTotalSize) / 2;
+                }
 
                 Layout.maximumWidth: contentSize
                 Layout.maximumHeight: contentSize
