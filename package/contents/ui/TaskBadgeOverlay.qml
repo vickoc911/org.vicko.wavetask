@@ -1,8 +1,8 @@
 /*
-    SPDX-FileCopyrightText: 2016 Kai Uwe Broulik <kde@privat.broulik.de>
-
-    SPDX-License-Identifier: GPL-2.0-or-later
-*/
+ *   SPDX-FileCopyrightText: 2016 Kai Uwe Broulik <kde@privat.broulik.de>
+ *
+ *   SPDX-License-Identifier: GPL-2.0-or-later
+ */
 
 import QtQuick
 import org.kde.kirigami as Kirigami
@@ -12,7 +12,10 @@ import org.kde.plasma.plasmoid
 Item {
     id: root
 
-    readonly property int iconWidthDelta: (icon.width - icon.paintedWidth) / 4
+    // Safely retrieve the sibling icon object from the parent loader context
+    readonly property Item targetIcon: parent ? parent.visualIcon : null
+
+    readonly property int iconWidthDelta: targetIcon ? (targetIcon.width - targetIcon.paintedWidth) / 4 : 0
     readonly property bool shiftBadgeDown: (Plasmoid.pluginName === "org.vicko.wavetask") && task.audioStreamIcon !== null
 
     Item {
@@ -24,7 +27,7 @@ Item {
 
             anchors.right: parent.right
             anchors.rightMargin: -offset
-            y: root.shiftBadgeDown ? (icon.height / 2) : 0
+            y: root.shiftBadgeDown && root.targetIcon ? (root.targetIcon.height / 2) : 0
 
             Behavior on y {
                 NumberAnimation { duration: Kirigami.Units.longDuration }
@@ -35,7 +38,6 @@ Item {
             height: badgeRect.height + offset * 2
             radius: badgeRect.radius + offset * 2
 
-            // Badge changes width based on number.
             onWidthChanged: maskShaderSource.scheduleUpdate()
             onVisibleChanged: maskShaderSource.scheduleUpdate()
             onYChanged: maskShaderSource.scheduleUpdate()
@@ -44,7 +46,7 @@ Item {
 
     ShaderEffectSource {
         id: iconShaderSource
-        sourceItem: icon
+        sourceItem: root.targetIcon
         hideSource: GraphicsInfo.api !== GraphicsInfo.Software
     }
 
@@ -65,8 +67,8 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
 
-        width: icon.paintedWidth / 2
-        height: icon.paintedWidth / 2
+        width: root.targetIcon ? root.targetIcon.paintedWidth / 2 : parent.width / 2
+        height: root.targetIcon ? root.targetIcon.paintedWidth / 2 : parent.height / 2
 
         source: iconShaderSource
         mask: maskShaderSource
@@ -82,14 +84,14 @@ Item {
 
         y: {
             const offset = Math.round(Math.max(Kirigami.Units.smallSpacing / 2, badgeMask.width / 32));
-            return offset + (root.shiftBadgeDown ? (icon.height / 2) : 0);
+            return offset + (root.shiftBadgeDown && root.targetIcon ? (root.targetIcon.height / 2) : 0);
         }
 
         Behavior on y {
             NumberAnimation { duration: Kirigami.Units.longDuration }
         }
 
-        height: Math.round((icon.height/2) * 0.45)
+        height: root.targetIcon ? Math.round((root.targetIcon.height / 2) * 0.45) : 16
         visible: task.smartLauncherItem.countVisible
         number: task.smartLauncherItem.count
     }

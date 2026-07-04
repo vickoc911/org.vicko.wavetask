@@ -23,29 +23,22 @@ Rectangle {
 
     property real renderScale: 1.8
 
-    implicitWidth: Math.max(height, Math.round(label.contentWidth + radius / 2)) // Add some padding around.[cite: 2]
+    implicitWidth: Math.max(height > 0 ? height : 24, Math.round(label.contentWidth + radius / 2)) // Prevent 0/negative height initialization loops
     implicitHeight: implicitWidth
 
     radius: height / 2
 
-    color: Kirigami.Theme.backgroundColor //[cite: 2]
+    color: Kirigami.Theme.backgroundColor
 
     antialiasing: true
-
-    // --- CUSTOM TRANSLATION ---
-    // Shifts the badge slightly further up and to the right relative to its parent anchors.
-    transform: Translate {
-        x: 6   // Positive value pushes rightwards
-        y: -6  // Negative value pushes upwards
-    }
 
     // Colored background
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: parent.height / 2
 
-        color: Qt.alpha(Kirigami.Theme.highlightColor, 0.3) //[cite: 2]
-        border.color: Kirigami.Theme.highlightColor //[cite: 2]
+        color: Qt.alpha(Kirigami.Theme.highlightColor, 0.3)
+        border.color: Kirigami.Theme.highlightColor
         border.width: 1
         antialiasing: true
     }
@@ -60,30 +53,30 @@ Rectangle {
         verticalAlignment: Text.AlignVCenter
 
         // Render grande para mantener nitidez
-        font.pixelSize: Math.round(parent.height * 0.55 * badgeRect.renderScale) //[cite: 2]
+        font.pixelSize: Math.round(parent.height * 0.55 * badgeRect.renderScale)
 
         // Reducimos visualmente
-        scale: 1 / badgeRect.renderScale //[cite: 2]
+        scale: 1 / badgeRect.renderScale
         transformOrigin: Item.Center
 
-        renderType: Text.NativeRendering //[cite: 2]
-        renderTypeQuality: Text.HighRenderTypeQuality //[cite: 2]
+        renderType: Text.NativeRendering
+        renderTypeQuality: Text.HighRenderTypeQuality
 
-        font.hintingPreference: Font.PreferFullHinting //[cite: 2]
+        font.hintingPreference: Font.PreferFullHinting
 
         layer.enabled: true
         smooth: true
 
         text: {
-            if (badgeRect.number < 0) { //[cite: 2]
-                return i18nc("Invalid number of new messages, overlay, keep short", "—"); //[cite: 2]
-            } else if (badgeRect.number > 9999) { //[cite: 2]
-                return i18nc("Over 9999 new messages, overlay, keep short", "9,999+"); //[cite: 2]
+            if (badgeRect.number < 0) {
+                return i18nc("Invalid number of new messages, overlay, keep short", "—");
+            } else if (badgeRect.number > 9999) {
+                return i18nc("Over 9999 new messages, overlay, keep short", "9,999+");
             } else {
-                return badgeRect.number.toLocaleString(Qt.locale(), 'f', 0); //[cite: 2]
+                return badgeRect.number.toLocaleString(Qt.locale(), 'f', 0);
             }
         }
 
-        textFormat: Text.PlainText //[cite: 2]
+        textFormat: Text.PlainText
     }
 }
