@@ -327,11 +327,13 @@ KCMUtils.SimpleKCM {
 
             textRole: "label"
 
-            currentIndex: switch (root.cfg_iconSpacing) {
-                    case 0: return 0; // Small
-                    case 1: return 1; // Normal
-                    case 3: return 2; // Large
+            currentIndex: {
+                switch (root.cfg_iconSpacing) {
+                case 0: return 0; // Small
+                case 1: return 1; // Normal
+                case 3: return 2; // Large
                 }
+                return 1; // Normal
             }
             onActivated: index => {
                 root.cfg_iconSpacing = model[currentIndex]["spacing"];

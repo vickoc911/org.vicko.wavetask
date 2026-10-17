@@ -27,10 +27,14 @@
 #include <QAction>
 #include <QActionGroup>
 #include <QApplication>
+#include <QDir>
+#include <QFileSystemWatcher>
 #include <QJsonArray>
 #include <QMenu>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QSet>
+#include <QSocketNotifier>
 #include <QStandardPaths>
 #include <QTimer>
 #include <QVersionNumber>
@@ -46,6 +50,12 @@
 
 #include <processcore/process.h>
 #include <processcore/processes.h>
+
+#include <cerrno>
+#include <fcntl.h>
+#include <linux/input.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 namespace KAStats = KActivities::Stats;
 
@@ -73,11 +83,19 @@ Backend::Backend(QObject *parent)
 
     s_instances.append(this);
     setupShortcuts();
+
+    // Direct /dev/input keyboard monitoring (instant, no focus dependency)
+    initInputMonitor();
 }
 
 Backend::~Backend()
 {
     s_instances.removeAll(this);
+
+    for (auto it = m_inputMonitors.constBegin(); it != m_inputMonitors.constEnd(); ++it) {
+        delete it.value().notifier;
+        close(it.key());
+    }
 }
 
 int Backend::screen() const
@@ -118,6 +136,199 @@ void Backend::setShowsOnlyCurrentScreen(bool shows)
         Q_EMIT showsOnlyCurrentScreenChanged();
     }
 }
+
+// --- Meta Key Detection ---
+
+bool Backend::isMetaKeyHeld() const
+{
+    return m_metaKeyHeld;
+}
+
+void Backend::setMetaKeyHeld(bool held)
+{
+    if (m_metaKeyHeld != held) {
+        qCDebug(WAVETASK_DEBUG) << "Backend: metaKeyHeld changed to" << held;
+        m_metaKeyHeld = held;
+        Q_EMIT metaKeyHeldChanged();
+    }
+}
+
+// --- /dev/input Keyboard Monitoring ---
+
+void Backend::initInputMonitor()
+{
+    // Initial scan for keyboards that are already connected
+    scanInputDevices();
+
+    // Short settle delay after a /dev/input change so udev finishes applying permissions to the new node
+    m_inputSettleTimer = new QTimer(this);
+    m_inputSettleTimer->setSingleShot(true);
+    m_inputSettleTimer->setInterval(500);
+    connect(m_inputSettleTimer, &QTimer::timeout, this, &Backend::scanInputDevices);
+
+    // inotify on /dev/input: probe only when nodes appear or disappear, no periodic polling
+    m_inputDirWatcher = new QFileSystemWatcher(this);
+    if (m_inputDirWatcher->addPath(QStringLiteral("/dev/input"))) {
+        connect(m_inputDirWatcher, &QFileSystemWatcher::directoryChanged, this, [this]() {
+            pruneProbedPaths();
+            m_inputSettleTimer->start();
+        });
+    } else {
+        // Fallback in case inotify is unavailable: periodic polling, now cheap because probed paths are remembered
+        auto *rescanTimer = new QTimer(this);
+        rescanTimer->setInterval(5000);
+        connect(rescanTimer, &QTimer::timeout, this, [this]() {
+            pruneProbedPaths();
+            scanInputDevices();
+        });
+
+        rescanTimer->start();
+    }
+}
+
+void Backend::scanInputDevices()
+{
+    QDir inputDir(QStringLiteral("/dev/input"));
+    const auto entries = inputDir.entryList({QStringLiteral("event*")}, QDir::System, QDir::Name);
+
+    for (const auto &name : entries) {
+        QString path = inputDir.absoluteFilePath(name);
+
+        if (m_probedPaths.contains(path)) {
+            continue; // Already probed before (monitored or rejected)
+        }
+
+        int fd = open(path.toUtf8().constData(), O_RDONLY | O_NONBLOCK);
+        if (fd < 0) {
+            // Don't remember the path: if udev hasn't applied permissions yet, the next /dev/input change retries it
+            continue;
+        }
+
+        // Each device is probed at most once per lifetime, monitored or not
+        m_probedPaths.insert(path);
+
+        // Check if this device supports EV_KEY events
+        unsigned long evBits[EV_CNT / (sizeof(unsigned long) * 8) + 1] = {};
+        if (ioctl(fd, EVIOCGBIT(0, sizeof(evBits)), evBits) < 0) {
+            close(fd);
+            continue;
+        }
+
+        if (!(evBits[EV_KEY / (sizeof(unsigned long) * 8)] & (1UL << (EV_KEY % (sizeof(unsigned long) * 8))))) {
+            close(fd);
+            continue;
+        }
+
+        // Check if it has the Meta keys
+        unsigned long keyBits[KEY_CNT / (sizeof(unsigned long) * 8) + 1] = {};
+        if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keyBits)), keyBits) < 0) {
+            close(fd);
+            continue;
+        }
+
+        bool hasLeftMeta = keyBits[KEY_LEFTMETA / (sizeof(unsigned long) * 8)] & (1UL << (KEY_LEFTMETA % (sizeof(unsigned long) * 8)));
+        bool hasRightMeta = keyBits[KEY_RIGHTMETA / (sizeof(unsigned long) * 8)] & (1UL << (KEY_RIGHTMETA % (sizeof(unsigned long) * 8)));
+
+        if (!hasLeftMeta && !hasRightMeta) {
+            close(fd);
+            continue;
+        }
+
+        // This is a keyboard with Meta keys — monitor it
+        auto *notifier = new QSocketNotifier(fd, QSocketNotifier::Read, this);
+        connect(notifier, &QSocketNotifier::activated, this, [this, fd]() {
+            onInputEvent(fd);
+        });
+
+        m_inputMonitors.insert(fd, {path, notifier});
+
+        qCDebug(WAVETASK_DEBUG) << "Backend: monitoring keyboard" << path
+                                << "(fd=" << fd << ")";
+    }
+}
+
+void Backend::pruneProbedPaths()
+{
+    QDir inputDir(QStringLiteral("/dev/input"));
+    const auto entries = inputDir.entryList({QStringLiteral("event*")}, QDir::System, QDir::Name);
+
+    QSet<QString> currentPaths;
+    for (const auto &name : entries) {
+        currentPaths.insert(inputDir.absoluteFilePath(name));
+    }
+
+    // Forget nodes that no longer exist, so a reconnection reusing the same path gets probed again
+    m_probedPaths.intersect(currentPaths);
+}
+
+void Backend::onInputEvent(int fd)
+{
+    struct input_event ev;
+
+    while (true) {
+        const ssize_t bytesRead = read(fd, &ev, sizeof(ev));
+
+        if (bytesRead == static_cast<ssize_t>(sizeof(ev))) {
+            if (ev.type == EV_KEY &&
+                (ev.code == KEY_LEFTMETA || ev.code == KEY_RIGHTMETA)) {
+                if (ev.value == 1) {
+                    // Press
+                    qCDebug(WAVETASK_DEBUG) << "Backend: Meta pressed (fd=" << fd << ")";
+                    setMetaKeyHeld(true);
+                } else if (ev.value == 0) {
+                    // Release
+                    qCDebug(WAVETASK_DEBUG) << "Backend: Meta released (fd=" << fd << ")";
+                    setMetaKeyHeld(false);
+                }
+
+                // value == 2 (auto-repeat): ignored for modifier keys
+            }
+
+            continue;
+        }
+
+        if (bytesRead < 0 && errno == EINTR) {
+            continue;
+        }
+
+        if (bytesRead < 0 && errno == EAGAIN) {
+            break; // No more events pending
+        }
+
+        // EOF or error (e.g. ENODEV on keyboard unplug): tear down the monitor so the notifier doesn't fire in a busy loop
+        removeInputDevice(fd);
+        break;
+    }
+}
+
+void Backend::removeInputDevice(int fd)
+{
+    const InputDeviceMonitor monitor = m_inputMonitors.take(fd);
+    if (!monitor.notifier) {
+        return;
+    }
+
+    monitor.notifier->setEnabled(false);
+    monitor.notifier->deleteLater();
+    close(fd);
+
+    // Forget the path (unless another fd already monitors the node that reused it) so a reconnection gets probed again
+    bool pathStillMonitored = false;
+    for (const auto &other : std::as_const(m_inputMonitors)) {
+        if (other.path == monitor.path) {
+            pathStillMonitored = true;
+            break;
+        }
+    }
+
+    if (!pathStillMonitored) {
+        m_probedPaths.remove(monitor.path);
+    }
+
+    qCDebug(WAVETASK_DEBUG) << "Backend: stopped monitoring" << monitor.path << "(fd=" << fd << ")";
+}
+
+// --- End Meta Key Detection ---
 
 QUrl Backend::tryDecodeApplicationsUrl(const QUrl &launcherUrl)
 {

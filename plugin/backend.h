@@ -9,9 +9,11 @@
 #include <KConfigWatcher>
 
 #include <QAction>
+#include <QHash>
 #include <QObject>
 #include <QQuickItem>
 #include <QRect>
+#include <QSet>
 
 #include <netwm.h>
 #include <qqmlregistration.h>
@@ -21,9 +23,12 @@
 
 class KActionCollection;
 class QActionGroup;
+class QFileSystemWatcher;
 class QQuickItem;
 class QQuickWindow;
 class QJsonArray;
+class QSocketNotifier;
+class QTimer;
 
 namespace KActivities
 {
@@ -50,6 +55,7 @@ public:
     Q_PROPERTY(int screen READ screen WRITE setScreen NOTIFY screenChanged)
     Q_PROPERTY(bool hasActiveTask READ hasActiveTask WRITE setHasActiveTask NOTIFY hasActiveTaskChanged)
     Q_PROPERTY(bool showsOnlyCurrentScreen READ showsOnlyCurrentScreen WRITE setShowsOnlyCurrentScreen NOTIFY showsOnlyCurrentScreenChanged)
+    Q_PROPERTY(bool metaKeyHeld READ isMetaKeyHeld NOTIFY metaKeyHeldChanged)
 
     explicit Backend(QObject *parent = nullptr);
     ~Backend() override;
@@ -77,10 +83,14 @@ public:
     bool showsOnlyCurrentScreen() const;
     void setShowsOnlyCurrentScreen(bool shows);
 
+    bool isMetaKeyHeld() const;
+
 Q_SIGNALS:
     void addLauncher(const QUrl &url) const;
 
     void showAllPlaces();
+
+    void metaKeyHeldChanged();
 
     void screenChanged();
     void hasActiveTaskChanged();
@@ -117,4 +127,23 @@ private:
 
     KActivityManagerdPluginsSettings m_activityManagerPluginsSettings;
     KConfigWatcher::Ptr m_activityManagerPluginsSettingsWatcher;
+
+    // Meta key detection via /dev/input monitoring
+    void setMetaKeyHeld(bool held);
+    void initInputMonitor();
+    void scanInputDevices();
+    void pruneProbedPaths();
+    void onInputEvent(int fd);
+    void removeInputDevice(int fd);
+
+    struct InputDeviceMonitor {
+        QString path;
+        QSocketNotifier *notifier = nullptr;
+    };
+
+    bool m_metaKeyHeld = false;
+    QFileSystemWatcher *m_inputDirWatcher = nullptr;
+    QTimer *m_inputSettleTimer = nullptr;
+    QHash<int, InputDeviceMonitor> m_inputMonitors;
+    QSet<QString> m_probedPaths;
 };
