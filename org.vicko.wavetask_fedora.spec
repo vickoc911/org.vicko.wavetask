@@ -1,8 +1,8 @@
 %undefine _cmake_in_source_build
 
 Name:           wavetask
-Version:        6.6.0
-Release:        12%{?dist}
+Version:        6.8.0
+Release:        1%{?dist}
 Summary:        Reusable Qt6 QML Task Manager Plugin for Plasma 6
 
 License:        GPL-3.0-only
@@ -28,6 +28,8 @@ BuildRequires:  kf6-knotifications-devel
 BuildRequires:  kf6-kio-devel
 BuildRequires:  kf6-kcoreaddons-devel
 BuildRequires:  kf6-kitemmodels-devel
+BuildRequires:  kf6-kglobalaccel-devel
+BuildRequires:  kf6-kxmlgui-devel
 
 BuildRequires:  libplasma-devel
 BuildRequires:  plasma-activities-devel
