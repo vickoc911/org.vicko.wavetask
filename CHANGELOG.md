@@ -1,105 +1,103 @@
 # Changelog
 
-Registro das melhorias recentes de 2026-11-05. Este documento nao substitui o
-historico completo do Git e nao atribui uma nova versao ao projeto.
+Recent improvements from 2026-11-05. This document does not replace the complete
+Git history or assign a new project version.
 
-## 1. Resumo das mudancas
+## 1. Change summary
 
-- Adicionado editor de entradas com lancadores, comandos manuais, espacadores e separadores.
-- Adicionada reordenacao por puxadores visiveis, previa flutuante e indicador de insercao.
-- Organizadas as abas de configuracao como Appearance, Entries e Behavior.
-- Adicionadas importacao multipla de `.desktop` e recepcao de arquivos no editor.
-- Mantido o arraste de `.desktop` para a dock ativa, com prioridade para URLs sobre metadados de widgets.
-- Corrigida a abertura de `.desktop` locais fora do catalogo, inclusive com espacos e Unicode.
-- Adicionado controle de tamanho do Cairo Penguin entre 25% e 300%, com padrao de 100%.
-- Removidos os menus de adicao/gerenciamento de widgets e o aceite de novos widgets na dock.
-- Preservados o carregamento e a remocao pelo menu do proprio widget para instancias antigas.
-- Corrigida a compatibilidade dos badges e do filtro de areas de trabalho nas APIs do Plasma.
-- Adicionados testes de interface, layout, persistencia, lancamento e tamanho do Cairo.
-- Documentados dependencias, limpeza, build, instalacao e uso das novas configuracoes.
+- Added an entry editor with launchers, manual commands, spacers, and separators.
+- Added reordering with visible drag handles, a floating preview, and an insertion marker.
+- Ordered the configuration tabs as Appearance, Entries, and Behavior.
+- Added multiple `.desktop` file imports and file drops in the editor.
+- Preserved `.desktop` drops onto the active dock, prioritizing URLs over widget metadata.
+- Fixed launching local `.desktop` files outside the catalogue, including paths with spaces and Unicode.
+- Added Cairo Penguin sizing from 25% to 300%, with a default of 100%.
+- Removed widget addition/management menus and support for adding new widgets to the dock.
+- Preserved loading and removal through each widget's own menu for existing instances.
+- Fixed badge and virtual desktop filtering compatibility across Plasma APIs.
+- Added tests for the interface, layout, persistence, launching, and Cairo sizing.
+- Documented dependencies, cleanup, builds, installation, and the new configuration options.
 
-## 2. Detalhes das funcionalidades e commits
+## 2. Feature details and commits
 
-### Referencia do conjunto de alteracoes
+### Changeset reference
 
-As mudancas funcionais acima foram reunidas no commit
+The functional changes above were collected in commit
 [`06fae31` — Add WidgetHost and associated tests for WaveTask](https://github.com/vickoc911/org.vicko.wavetask/commit/06fae313c340783a891d419ca2bbf0315424fbde).
-Apesar do titulo destacar o WidgetHost, o diff inclui tambem o editor de entradas,
-o feedback de arraste, as correcoes de lancadores, o controle do Cairo e a
-documentacao inicial. Nao existem commits separados para cada funcionalidade
-desse conjunto.
+Although its title highlights WidgetHost, the diff also includes the entry editor,
+drag feedback, launcher fixes, Cairo sizing, and initial documentation.
+There are no separate commits for each feature in this changeset.
 
-### Editor de entradas e feedback visual
+### Entry editor and visual feedback
 
-- Nova aba **Entries**, localizada entre **Appearance** e **Behavior**.
-- Aplicativos ja fixados sao incluidos automaticamente na lista.
-- Puxadores com cursor de mao permitem reorganizar a lista; botoes de
-  subir/descer oferecem um caminho alternativo.
-- Durante o arraste, a linha original fica atenuada, uma previa acompanha o
-  ponteiro e uma linha colorida mostra a posicao de insercao.
-- A ordem muda ao soltar; o editor tambem faz rolagem automatica nas bordas.
-- Espacadores reservam espaco vazio; separadores desenham uma linha discreta.
-  Ambos permitem ajustar o tamanho de 1 a 256 pixels.
-- Comandos manuais possuem nome, comando e icone configuraveis, com edicao e
-  remocao posteriores. Argumentos entre aspas sao aceitos; operadores e
-  substituicoes de shell nao sao interpretados.
-- **Aplicar** salva a configuracao. Cancelar as configuracoes nao altera a dock.
-- O layout salvo prevalece sobre a ordenacao da aba Behavior e o arraste direto
-  dos botoes de tarefas. Janelas nao fixadas aparecem depois das entradas.
-- Entradas manuais sao botoes independentes; arquivos `.desktop` continuam sendo
-  o caminho para integracao normal com janelas e agrupamento.
+- Added the **Entries** tab between **Appearance** and **Behavior**.
+- Existing pinned applications are automatically included in the list.
+- Drag handles with hand cursors allow reordering; up/down buttons provide an
+  alternative.
+- While dragging, the original row is dimmed, a preview follows the pointer, and
+  a colored line indicates the insertion position.
+- The order changes on release; the editor also scrolls automatically at the edges.
+- Spacers reserve empty space; separators draw a subtle line. Both support sizes
+  from 1 to 256 pixels.
+- Manual commands have configurable names, commands, and icons, with subsequent
+  editing and removal. Quoted arguments are accepted; shell operators and
+  substitutions are not interpreted.
+- **Apply** saves the configuration. Cancelling configuration leaves the dock unchanged.
+- The saved layout takes precedence over Behavior sorting and direct task-button
+  dragging. Unpinned windows appear after the configured entries.
+- Manual entries are independent buttons; `.desktop` files remain the way to
+  obtain normal window integration and grouping.
 
-### Arquivos `.desktop` e dock ativa
+### `.desktop` files and the active dock
 
-- O editor importa um ou varios arquivos pelo seletor ou por arraste para a lista.
-- O arraste diretamente para a dock ativa continua fixando aplicativos sem abrir
-  as configuracoes. Novos lancadores aparecem no final do layout configurado.
-- Arrastes contendo URLs nao sao rejeitados apenas por tambem anunciarem o
-  formato de widget Plasma; o aceite do drop de URLs e explicito.
-- Lancadores locais sao lidos diretamente com KService e executados pelo KIO,
-  sem exigir registro no catalogo de aplicativos.
-- Caminhos com espacos e Unicode sao suportados. As verificacoes de confianca e
-  permissoes do KIO continuam valendo.
+- The editor imports one or more files through the file picker or drops onto the list.
+- Dropping directly onto the active dock still pins applications without opening
+  configuration. New launchers appear at the end of the configured layout.
+- Drags containing URLs are not rejected merely because they also advertise the
+  Plasma widget format; URL drops are explicitly accepted.
+- Local launchers are read directly with KService and launched through KIO,
+  without requiring registration in the application catalogue.
+- Paths with spaces and Unicode are supported. KIO trust and permission checks
+  remain in effect.
 
-### Tamanho do Cairo Penguin
+### Cairo Penguin size
 
-- **Appearance → Cairo Penguin size (%)** permite ajustar o tamanho de 25% a 300%.
-- O padrao de 100% preserva o tamanho anterior, equivalente a dois tercos do
-  tamanho dos icones da dock.
-- O controle so fica habilitado quando o Cairo esta ativado.
-- O tamanho acompanha as alteracoes da configuracao e do tamanho dos icones.
-- Continua restrito a docks horizontais; tamanhos maiores podem exigir um painel
-  mais alto para evitar cortes na animacao.
+- **Appearance → Cairo Penguin size (%)** allows sizing from 25% to 300%.
+- The default of 100% preserves the previous size, equivalent to two thirds of
+  the dock's application icon size.
+- The control is enabled only while the Cairo Penguin is enabled.
+- Sizing follows changes to the configuration and application icon size.
+- Support remains limited to horizontal docks; larger sizes may require a taller
+  panel to avoid clipping the animation.
 
-### Transicao dos widgets para entradas nativas
+### Transition from widgets to native entries
 
-- Retirados os menus para adicionar widgets, o seletor de adicao e o menu
-  **Manage embedded widgets...**.
-- Desativada a incorporacao de novos widgets por arraste na WaveTask.
-- Preservados widgets existentes, suas configuracoes e o containment interno
-  para compatibilidade; nao ha exclusao automatica dessas instancias.
-- No modo de edicao do Plasma, o menu de clique direito do proprio widget ainda
-  permite configurar, mover ou remover uma instancia antiga.
-- Os novos espacadores e separadores do editor sao itens nativos da dock, nao
-  widgets Plasma, e participam do calculo de espaco e zoom nas duas orientacoes.
+- Removed widget addition menus, the widget picker, and the
+  **Manage embedded widgets...** menu.
+- Disabled embedding new widgets by dropping them onto WaveTask.
+- Preserved existing widgets, their configuration, and the internal containment
+  for compatibility; these instances are not automatically deleted.
+- In Plasma edit mode, each widget's own right-click menu still allows configuring,
+  moving, or removing an existing instance.
+- The editor's new spacers and separators are native dock items, not Plasma
+  widgets, and participate in spacing and zoom calculations in both orientations.
 
-### Compatibilidade, testes e instalacao
+### Compatibility, tests, and installation
 
-- Badge local evita depender de `Kirigami.Badge`, ausente em algumas versoes.
-- Bindings selecionam as propriedades disponiveis para filtragem por area de
-  trabalho; as acoes usam a API de desktop compativel com a versao instalada.
-- Testes cobrem carregamento QML, ordem e persistencia das entradas, puxadores,
-  previa e indicador de insercao, salvar/cancelar, importacao, comandos manuais,
-  dimensoes do Cairo e deslocamento real dos icones em layouts horizontal e vertical.
-- Testes do WidgetHost preservam cobertura de instancias antigas e restauracao
-  do containment. Fixtures de execucao utilizam `/usr/bin/true`.
-- A instalacao continua incluindo o plugin compilado e os pacotes QML. E preciso
-  sair e entrar novamente na sessao para recarregar uma biblioteca ja carregada
-  pelo `plasmashell`; WaveTask nao e um executavel independente.
-- O [guia de instalacao](INSTALL.md) inclui dependencias para Kubuntu/Ubuntu e
-  Fedora, limpeza, build, testes opcionais e instalacao. O [README](README.md)
-  descreve os fluxos de uso e suas limitacoes.
+- A local badge avoids depending on `Kirigami.Badge`, which is missing in some versions.
+- Bindings select the available virtual desktop filtering properties; actions use
+  the desktop API compatible with the installed version.
+- Tests cover QML loading, entry order and persistence, drag handles, previews and
+  insertion markers, save/cancel behavior, imports, manual commands, Cairo
+  dimensions, and actual icon displacement in horizontal and vertical layouts.
+- WidgetHost tests retain coverage for existing instances and containment
+  restoration. Launch fixtures use `/usr/bin/true`.
+- Installation still includes the compiled plugin and QML packages. Log out and
+  back in to reload a library already loaded by `plasmashell`; WaveTask is not
+  a standalone executable.
+- The [installation guide](INSTALL.md) includes Kubuntu/Ubuntu and Fedora
+  dependencies, cleanup, builds, optional tests, and installation.
+  The [README](README.md) describes usage and limitations.
 
-O build e as tres suites CTest passaram durante a implementacao. Os testes
-automatizados nao equivalem a uma validacao visual completa na sessao Plasma
-do usuario.
+The build and all three CTest suites passed during implementation. Automated
+tests do not replace full visual validation in the user's Plasma session.

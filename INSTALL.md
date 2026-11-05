@@ -1,16 +1,15 @@
-# Compilar e instalar o WaveTask
+# Building and installing WaveTask
 
-Este guia descreve a compilacao a partir do codigo-fonte em sistemas com KDE
-Plasma 6. Os comandos de pacotes abaixo cobrem Kubuntu/Ubuntu e Fedora. A versao
-do Plasma e as bibliotecas de desenvolvimento instaladas precisam ser
-compativeis entre si.
+This guide covers building from source on KDE Plasma 6 systems. The package
+commands below cover Kubuntu/Ubuntu and Fedora. The installed Plasma version
+and development libraries must be compatible.
 
-O [CHANGELOG.md](CHANGELOG.md) registra as mudancas em duas secoes: resumo de
-uma linha por mudanca e detalhes das funcionalidades com referencias aos commits.
+[CHANGELOG.md](CHANGELOG.md) records changes in two sections: a one-line summary
+per change and feature details with commit references.
 
-## Kubuntu e Ubuntu
+## Kubuntu and Ubuntu
 
-Instale as ferramentas de compilacao e as dependencias de desenvolvimento:
+Install the build tools and development dependencies:
 
 ```sh
 sudo apt update
@@ -38,16 +37,17 @@ sudo dnf install gcc-c++ cmake extra-cmake-modules \
   plasma-workspace-devel libksysguard-devel kwin-devel
 ```
 
-## Limpar e compilar
+## Clean and build
 
-Na raiz do repositorio, remova a pasta de build anterior se quiser iniciar uma
-configuracao limpa. Este comando apaga somente a pasta local `build/`:
+From the repository root, optionally remove the previous build directory to
+start with a clean configuration. This command deletes only the local `build/`
+directory:
 
 ```sh
 rm -rf build
 ```
 
-Configure e compile em modo Release:
+Configure and build in Release mode:
 
 ```sh
 cmake -S . -B build \
@@ -57,17 +57,15 @@ cmake -S . -B build \
 cmake --build build --parallel "$(nproc)"
 ```
 
-Para validar os QML, opcionalmente rode:
+Optionally run the QML lint target:
 
 ```sh
 cmake --build build --target all_qmllint
 ```
 
-O alvo acima verifica apenas o modulo C++/QML gerado, nao toda a interface do
-applet. Para testar o editor, o arraste pelos puxadores, a ordem das entradas,
-o deslocamento dos icones nas duas orientacoes, o tamanho do Cairo e os widgets
-antigos, habilite os
-testes e execute:
+This target checks only the generated C++/QML module, not the entire applet
+interface. To test the editor, handle dragging, entry order, icon displacement
+in both orientations, Cairo sizing, and existing widgets, enable and run tests:
 
 ```sh
 cmake -S . -B build -DBUILD_TESTING=ON
@@ -75,84 +73,82 @@ cmake --build build --parallel "$(nproc)"
 ctest --test-dir build --output-on-failure
 ```
 
-Os testes requerem Qt Test e `qmltestrunner` do Qt 6. No Kubuntu/Ubuntu, instale
-`qml6-module-qttest qt6-declarative-dev-tools`. O CTest usa o plugin recem-compilado
-e pacotes de teste locais, sem precisar instalar como root. O teste de launcher
-usa um arquivo local que executa somente `/usr/bin/true`.
+Tests require Qt Test and Qt 6 `qmltestrunner`. On Kubuntu/Ubuntu, install
+`qml6-module-qttest qt6-declarative-dev-tools`. CTest uses the freshly built
+plugin and local test packages without requiring installation as root.
+The launcher test uses a local file that runs only `/usr/bin/true`.
 
-## Instalar
+## Install
 
-Instale nos caminhos de sistema configurados pelo KDE:
+Install into the system paths configured by KDE:
 
 ```sh
 sudo cmake --install build
 ```
 
-Esse comando instala tambem o containment interno `org.vicko.wavetask.widgets`,
-mantido para carregar/remover widgets incorporados anteriormente. Nao copie apenas a
-biblioteca do plugin.
+This command also installs the internal `org.vicko.wavetask.widgets` containment,
+retained for loading/removing previously embedded widgets. Do not copy only the
+plugin library.
 
-Depois, saia e entre novamente na sessao Plasma para garantir que o shell carregue
-a versao instalada do plugin. Em seguida, adicione o painel WaveTask pelo modo
-de edicao do Plasma. O README contem as instrucoes para configurar o painel.
+After installation, log out and back into the Plasma session to ensure the shell
+loads the installed plugin version. Then add the WaveTask panel through Plasma
+edit mode if needed. The README contains panel configuration instructions.
 
-## Tamanho do Cairo
+## Cairo size
 
-Na aba **Appearance**, a opcao **Cairo Penguin size (%)** ajusta o tamanho do
-Cairo de 25% a 300%, quando ele esta habilitado. O padrao de 100% preserva o
-tamanho anterior: dois tercos do tamanho dos icones. Clique em **Aplicar** para
-salvar; o controle fica desabilitado enquanto o Cairo estiver desligado.
-Para tamanhos grandes, aumente a
-altura do painel se a animacao ficar cortada. O Cairo continua disponivel apenas
-na dock horizontal.
+In **Appearance**, **Cairo Penguin size (%)** adjusts Cairo from 25% to 300% while
+it is enabled. The default of 100% preserves the previous size: two thirds of
+the application icon size. Click **Apply** to save; the control is disabled while
+Cairo is turned off.
 
-## Editor de entradas: ordem, espacadores e separadores
+For larger sizes, increase the panel height if the animation is clipped.
+Cairo remains available only on horizontal docks.
 
-1. Abra as configuracoes da WaveTask e entre na aba **Entries** (Entradas).
-   Ela fica depois de **Appearance** e antes de **Behavior**.
-   Os aplicativos ja fixados aparecem automaticamente.
-2. Arraste o puxador visivel de uma linha para outra para reorganizar. Os
-   botoes de subir/descer tambem estao disponiveis. Durante o arraste, uma
-   previa acompanha o ponteiro e uma linha destaca a posicao de insercao.
-3. Use **Spacer** para espaco vazio ou **Separator** para uma linha discreta.
-   Ajuste o espaco reservado de 1 a 256 pixels na propria linha.
-4. Use **Manual entry** para informar nome, comando e icone (nome do tema ou
-   caminho de imagem). O comando aceita argumentos entre aspas, mas nao
-   operadores de shell, pipes ou substituicoes. O botao de editar altera esses
-   dados depois.
-5. Use **Import .desktop** para selecionar um ou varios arquivos, ou arraste
-   arquivos `.desktop` para a lista. Caminhos locais com espacos e Unicode
-   tambem sao aceitos; nao precisam estar no catalogo de aplicativos.
-6. O botao de lixeira remove a entrada. Clique em **Aplicar** para salvar.
-   Cancelar as configuracoes nao modifica a dock.
+## Entry editor: order, spacers, and separators
 
-Tambem continua sendo possivel arrastar arquivos `.desktop` diretamente para a
-dock ativa para fixar aplicativos, sem abrir as configuracoes. Com um layout
-salvo, novas entradas aparecem no final da lista e podem ser reorganizadas no
-editor. Somente o arraste para incorporar widgets Plasma foi desativado.
+1. Open WaveTask configuration and select **Entries**, after **Appearance** and
+   before **Behavior**. Existing pinned applications are automatically included.
+2. Drag a row's visible handle to reorder it. Up/down buttons are also available.
+   While dragging, a preview follows the pointer and a line highlights the
+   insertion position.
+3. Use **Spacer** for empty space or **Separator** for a subtle line. Adjust the
+   reserved space from 1 to 256 pixels directly in the row.
+4. Use **Manual entry** to enter a name, command, and icon (theme name or image
+   path). Commands accept quoted arguments, but not shell operators, pipes, or
+   substitutions. The edit button allows changing these values later.
+5. Use **Import .desktop** to select one or more files, or drop `.desktop` files
+   onto the list. Local paths containing spaces and Unicode are accepted; files
+   do not need to be registered in the application catalogue.
+6. The trash button removes an entry. Click **Apply** to save.
+   Cancelling configuration leaves the dock unchanged.
 
-A ordem salva no editor prevalece sobre a ordenacao da aba Behavior e o arraste
-direto dos botoes de tarefas. Janelas nao fixadas aparecem depois das entradas.
-Espacadores e separadores reservam espaco horizontal/vertical, inclusive durante
-o zoom, sem criar widgets Plasma.
+You can still drag `.desktop` files directly onto the active dock to pin
+applications without opening configuration. With a saved layout, new entries
+appear at the end of the list and can be reordered in the editor. Only drops
+for embedding Plasma widgets have been disabled.
 
-Entradas manuais sao botoes de execucao independentes. Para a integracao normal
-com janelas, agrupamento e menus de aplicativos, prefira arquivos `.desktop`.
+The editor's saved order takes precedence over Behavior sorting and direct
+task-button dragging. Unpinned windows appear after the configured entries.
+Spacers and separators reserve horizontal/vertical space, including during
+zoom, without creating Plasma widgets.
 
-## Remover widgets antigos
+Manual entries are independent launch buttons. For normal window integration,
+grouping, and application menus, prefer `.desktop` files.
 
-Os menus de adicao de widgets e o aceite de arraste para incorpora-los foram
-retirados, assim como o menu **Manage embedded widgets...**. Widgets ja existentes
-nao sao apagados. Para remove-los, desbloqueie os widgets no modo de edicao do
-Plasma e clique com o botao direito no proprio widget, depois **Remove widget**.
+## Remove existing widgets
 
-## Resolver problemas de configuracao
+Widget addition menus and embedding drops have been removed, along with the
+**Manage embedded widgets...** menu. Existing widgets are not deleted.
+To remove one, unlock widgets in Plasma edit mode and right-click the widget
+itself, then select **Remove widget**.
 
-Se o CMake nao encontrar uma biblioteca, confirme que os pacotes de
-desenvolvimento correspondem a versao do Plasma instalada. Para reconfigurar do
-zero, remova `build/` e repita os comandos de compilacao acima.
+## Troubleshooting configuration
 
-Launchers `.desktop` locais podem ficar fora de `~/.local/share/applications/`;
-a dock le o arquivo diretamente. O KIO continua verificando a confianca e as
-permissoes do launcher. Somente para arquivos que voce conhece e confia, marque
-o arquivo como executavel nas propriedades do gerenciador de arquivos.
+If CMake cannot find a library, check that the development packages match the
+installed Plasma version. To reconfigure from scratch, remove `build/` and repeat
+the build commands above.
+
+Local `.desktop` launchers may reside outside `~/.local/share/applications/`;
+the dock reads the file directly. KIO still checks launcher trust and permissions.
+Only for files you know and trust, mark the file executable in the file
+manager's properties dialog.
