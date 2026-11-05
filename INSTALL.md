@@ -5,6 +5,9 @@ Plasma 6. Os comandos de pacotes abaixo cobrem Kubuntu/Ubuntu e Fedora. A versao
 do Plasma e as bibliotecas de desenvolvimento instaladas precisam ser
 compativeis entre si.
 
+O [CHANGELOG.md](CHANGELOG.md) registra as mudancas em duas secoes: resumo de
+uma linha por mudanca e detalhes das funcionalidades com referencias aos commits.
+
 ## Kubuntu e Ubuntu
 
 Instale as ferramentas de compilacao e as dependencias de desenvolvimento:
@@ -62,7 +65,8 @@ cmake --build build --target all_qmllint
 
 O alvo acima verifica apenas o modulo C++/QML gerado, nao toda a interface do
 applet. Para testar o editor, o arraste pelos puxadores, a ordem das entradas,
-o deslocamento dos icones nas duas orientacoes e os widgets antigos, habilite os
+o deslocamento dos icones nas duas orientacoes, o tamanho do Cairo e os widgets
+antigos, habilite os
 testes e execute:
 
 ```sh
@@ -96,7 +100,9 @@ de edicao do Plasma. O README contem as instrucoes para configurar o painel.
 
 Na aba **Appearance**, a opcao **Cairo Penguin size (%)** ajusta o tamanho do
 Cairo de 25% a 300%, quando ele esta habilitado. O padrao de 100% preserva o
-tamanho anterior, proporcional aos icones. Para tamanhos grandes, aumente a
+tamanho anterior: dois tercos do tamanho dos icones. Clique em **Aplicar** para
+salvar; o controle fica desabilitado enquanto o Cairo estiver desligado.
+Para tamanhos grandes, aumente a
 altura do painel se a animacao ficar cortada. O Cairo continua disponivel apenas
 na dock horizontal.
 

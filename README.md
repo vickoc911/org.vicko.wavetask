@@ -84,6 +84,9 @@ sudo apt install wavetask
 See [INSTALL.md](INSTALL.md) for dependency installation, clean build, and
 installation commands for Kubuntu/Ubuntu and Fedora.
 
+See [CHANGELOG.md](CHANGELOG.md) for a one-line summary of each recent change,
+followed by feature details and the corresponding commits.
+
 ## Global keyboard shortcuts
 
 Wave Task Manager registers its shortcuts under the **Wave Task Manager** group to prevent conflicts with Plasma's built-in task manager.
@@ -111,7 +114,7 @@ Task cycling and moving shortcuts are also available under the **Wave Task Manag
 - Option to select the amplitude
 - Option to disable icon reflection
 - blur for default and custom skins
-- Cairo Penguin ( only in landscape mode )
+- Cairo Penguin with configurable size (horizontal docks only)
 
 ## Entry editor
 
@@ -138,13 +141,28 @@ instead of the Behavior sorting option or direct task-button dragging. Unpinned
 windows follow the configured entries. Spacers and separators reserve space in
 both orientations and during zoom; they are not Plasma widgets.
 
+Dragging `.desktop` files directly onto the active dock is still supported.
+New launchers are appended to the configured entries and can then be reordered
+in the editor. Only Plasma widget embedding drops are disabled; URL drops take
+priority even when a drag also advertises widget metadata.
+
+## Cairo Penguin size
+
+Open **Configure WaveTask → Appearance**, enable **Show Cairo Penguin**, and
+adjust **Cairo Penguin size (%)** from **25% to 300%**, then click **Apply**.
+The default **100%** preserves the previous size: two thirds of the application
+icon size. The control is disabled while the penguin is turned off.
+
+The Cairo Penguin remains available only on horizontal docks. Larger sizes may
+require increasing the panel height to avoid clipping the animation.
+
 ## Previously embedded widgets
 
 Widget-addition menus and widget drops into WaveTask have been removed.
 Existing embedded widgets and their settings remain intact. The **Manage embedded
 widgets...** menu has also been removed. In Plasma's edit mode, right-click an
-existing embedded widget to configure or remove it. The internal containment package remains
-installed for this backward compatibility.
+existing embedded widget to configure or remove it. The internal containment
+package remains installed for this backward compatibility.
 
 Skins:
 
