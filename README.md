@@ -103,6 +103,8 @@ Task cycling and moving shortcuts are also available under the **Wave Task Manag
 
 ## Features:
 
+- Window filtering by current virtual desktop, KDE Activity, and dock monitor
+- Optional minimized-only filtering, combinable with desktop, Activity, and monitor filters
 - Entry editor with drag handles, launchers, manual commands, spacers and separators
 - It inherits all the features of Plasma's task manager
 - Zoom like in macOS
@@ -115,6 +117,27 @@ Task cycling and moving shortcuts are also available under the **Wave Task Manag
 - Option to disable icon reflection
 - blur for default and custom skins
 - Cairo Penguin with configurable size (horizontal docks only)
+
+## Window filtering
+
+Open **Configure WaveTask → Behavior → Show only tasks** to choose which windows
+appear in each WaveTask instance:
+
+- **From the current desktop:** show windows belonging to the current virtual desktop.
+- **From the current activity:** show windows belonging to the active KDE Activity.
+- **From the current screen:** show windows on the monitor containing this dock,
+  not whichever monitor currently contains the pointer.
+- **That are minimized:** show only minimized windows.
+
+The options are independent and can be combined. For example, enabling desktop,
+Activity, and screen filtering limits the window list to those matching all three.
+Disabling a filter removes that restriction. Pinned application launchers remain
+configured separately in **Entries**; these options filter window tasks rather
+than deleting pinned entries.
+
+Desktop filtering selects the API supported by the installed Plasma version.
+See the [changelog](CHANGELOG.md) for the distinction between existing filtering
+features and the recent desktop API compatibility fix.
 
 ## Entry editor
 

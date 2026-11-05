@@ -94,6 +94,24 @@ After installation, log out and back into the Plasma session to ensure the shell
 loads the installed plugin version. Then add the WaveTask panel through Plasma
 edit mode if needed. The README contains panel configuration instructions.
 
+## Window filters: desktop, Activity, and monitor
+
+Open **Configure WaveTask → Behavior → Show only tasks** and enable the desired
+filters:
+
+- **From the current desktop:** restrict windows to the current virtual desktop.
+- **From the current activity:** restrict windows to the active KDE Activity.
+- **From the current screen:** restrict windows to the monitor hosting this dock.
+- **That are minimized:** restrict the list to minimized windows.
+
+You can combine these options; windows must satisfy every enabled restriction.
+Click **Apply** to save. Disable a checkbox to include windows beyond that scope.
+For a dock on each monitor, enable **From the current screen** in each instance.
+This setting refers to the dock's monitor, not the pointer's monitor.
+
+These filters affect window tasks, not the saved pinned entries. Use **Entries**
+to add, remove, or reorder launchers.
+
 ## Cairo size
 
 In **Appearance**, **Cairo Penguin size (%)** adjusts Cairo from 25% to 300% while

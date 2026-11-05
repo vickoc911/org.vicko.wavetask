@@ -5,6 +5,10 @@ Git history or assign a new project version.
 
 ## 1. Change summary
 
+- Documented existing window filters by current virtual desktop, KDE Activity, and dock monitor as core features.
+- Documented combining window scope filters with the existing minimized-only option.
+- Fixed virtual desktop filtering compatibility by selecting the supported Plasma API at runtime.
+- Fixed badge compatibility where `Kirigami.Badge` is unavailable.
 - Added an entry editor with launchers, manual commands, spacers, and separators.
 - Added reordering with visible drag handles, a floating preview, and an insertion marker.
 - Ordered the configuration tabs as Appearance, Entries, and Behavior.
@@ -14,7 +18,6 @@ Git history or assign a new project version.
 - Added Cairo Penguin sizing from 25% to 300%, with a default of 100%.
 - Removed widget addition/management menus and support for adding new widgets to the dock.
 - Preserved loading and removal through each widget's own menu for existing instances.
-- Fixed badge and virtual desktop filtering compatibility across Plasma APIs.
 - Added tests for the interface, layout, persistence, launching, and Cairo sizing.
 - Documented dependencies, cleanup, builds, installation, and the new configuration options.
 
@@ -22,11 +25,32 @@ Git history or assign a new project version.
 
 ### Changeset reference
 
-The functional changes above were collected in commit
+The recent functional changes above were collected in commit
 [`06fae31` — Add WidgetHost and associated tests for WaveTask](https://github.com/vickoc911/org.vicko.wavetask/commit/06fae313c340783a891d419ca2bbf0315424fbde).
 Although its title highlights WidgetHost, the diff also includes the entry editor,
 drag feedback, launcher fixes, Cairo sizing, and initial documentation.
 There are no separate commits for each feature in this changeset.
+Window filters by desktop, Activity, screen, and minimized state already existed
+before this commit. The recent changes fix desktop API compatibility and expand
+their documentation; they do not introduce these filters for the first time.
+
+### Window filtering by desktop, Activity, and monitor
+
+- **Behavior → Show only tasks** exposes independent restrictions for the current
+  virtual desktop, active KDE Activity, and the monitor hosting the dock.
+- The screen filter follows the dock's containment screen geometry, not the
+  pointer location; separate dock instances can filter their own monitors.
+- The Activity filter follows the active KDE Activity.
+- Restrictions can be combined, and the minimized-only option can narrow the
+  results further. Disabling an option removes that restriction.
+- Filtering affects window tasks without removing saved pinned launchers.
+- The desktop compatibility fix in `06fae31` selects
+  `filterByCurrentVirtualDesktop` when available or `filterByVirtualDesktop`
+  otherwise, supplying `virtualDesktop` for models that expose it.
+- Desktop actions also support the legacy current-desktop property and newer
+  screen-geometry-based desktop lookup.
+- These are existing core task-manager features; the documentation now makes
+  their configuration and scope explicit in the README and installation guide.
 
 ### Entry editor and visual feedback
 
