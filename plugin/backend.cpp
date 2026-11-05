@@ -23,6 +23,8 @@
 
 #include <KApplicationTrader>
 #include <KIO/ApplicationLauncherJob>
+#include <KIO/CommandLauncherJob>
+#include <KShell>
 
 #include <QAction>
 #include <QActionGroup>
@@ -343,6 +345,48 @@ QUrl Backend::tryDecodeApplicationsUrl(const QUrl &launcherUrl)
     }
 
     return launcherUrl;
+}
+
+QVariantMap Backend::desktopEntry(const QUrl &url) const
+{
+    const QUrl local = tryDecodeApplicationsUrl(url);
+    if (local.isLocalFile() && KDesktopFile::isDesktopFile(local.toLocalFile())) {
+        const KService service(local.toLocalFile());
+        if (service.isValid() && service.isApplication() && !service.exec().isEmpty()) {
+            return {{QStringLiteral("type"), QStringLiteral("launcher")},
+                {QStringLiteral("url"), url.toString()},
+                {QStringLiteral("title"), service.name()},
+                {QStringLiteral("icon"), service.icon()}};
+        }
+    }
+    const QString error = i18n("Cannot import %1: select a valid Application .desktop file.", url.toDisplayString());
+    qCWarning(WAVETASK_DEBUG) << error;
+    return {{QStringLiteral("error"), error}};
+}
+
+QString Backend::validateCommand(const QString &command) const
+{
+    KShell::Errors error;
+    const auto args = KShell::splitArgs(command, KShell::TildeExpand | KShell::AbortOnMeta, &error);
+    if (error != KShell::NoError || args.isEmpty()) {
+        return i18n("Enter an executable and arguments with valid quotes. Shell operators are not supported.");
+    }
+    return {};
+}
+
+bool Backend::launchCommand(const QString &command) const
+{
+    const QString error = validateCommand(command);
+    if (!error.isEmpty()) {
+        qCWarning(WAVETASK_DEBUG) << error;
+        return false;
+    }
+    auto args = KShell::splitArgs(command, KShell::TildeExpand | KShell::AbortOnMeta);
+    const QString executable = args.takeFirst();
+    auto *job = new KIO::CommandLauncherJob(executable, args);
+    job->setUiDelegate(new KNotificationJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled));
+    job->start();
+    return true;
 }
 
 QStringList Backend::applicationCategories(const QUrl &launcherUrl)
@@ -752,6 +796,29 @@ bool Backend::isApplication(const QUrl &url) const
 
     KDesktopFile desktopFile(localPath);
     return desktopFile.hasApplicationType();
+}
+
+bool Backend::launchApplication(const QUrl &launcherUrl) const
+{
+    const QUrl desktopEntryUrl = tryDecodeApplicationsUrl(launcherUrl);
+    if (!desktopEntryUrl.isValid() || !desktopEntryUrl.isLocalFile()
+        || !KDesktopFile::isDesktopFile(desktopEntryUrl.toLocalFile())) {
+        qCWarning(WAVETASK_DEBUG) << "Cannot launch invalid desktop entry:" << launcherUrl;
+        return false;
+    }
+
+    const KService::Ptr service(new KService(desktopEntryUrl.toLocalFile()));
+    if (!service->isValid() || !service->isApplication()) {
+        qCWarning(WAVETASK_DEBUG) << "Cannot resolve application desktop entry:" << desktopEntryUrl;
+        return false;
+    }
+
+    auto *job = new KIO::ApplicationLauncherJob(service);
+    auto *delegate = new KNotificationJobUiDelegate;
+    delegate->setAutoErrorHandlingEnabled(true);
+    job->setUiDelegate(delegate);
+    job->start();
+    return true;
 }
 
 qint64 Backend::parentPid(qint64 pid) const

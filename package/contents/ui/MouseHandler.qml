@@ -12,6 +12,7 @@ import org.kde.taskmanager as TaskManager
 import org.kde.plasma.plasmoid
 
 import "code/TaskTools.js" as TaskTools
+import "code/DragTools.js" as DragTools
 
 DropArea {
     id: dropArea
@@ -27,15 +28,20 @@ DropArea {
 
     //ignore anything that is neither internal to TaskManager or a URL list
     onEntered: event => {
-        if (event.formats.indexOf("text/x-plasmoidservicename") >= 0) {
+        if (DragTools.isWidgetOnly(event.formats, event.hasUrls)) {
             event.accepted = false;
+            return;
         }
+        if (event.hasUrls) event.acceptProposedAction();
         if (target.animating) { // Not all targets have an animating property
             target.animating = false;
         }
     }
 
     onPositionChanged: event => {
+        if (DragTools.isWidgetOnly(event.formats, event.hasUrls)) {
+            return;
+        }
         if (target.animating) {
             return;
         }
@@ -44,7 +50,7 @@ DropArea {
         if (isGroupDialog) {
             above = target.itemAt(event.x, event.y);
         } else {
-            above = target.childAt(event.x, event.y);
+            above = target.taskAt(event.x, event.y);
         }
 
         if (!above) {
@@ -74,6 +80,9 @@ DropArea {
         }
 
         if (tasksModel.sortMode === TaskManager.TasksModel.SortManual && tasks.dragSource) {
+            if (tasks.hasEntryLayout) {
+                return;
+            }
             // Reject drags between different TaskList instances.
             if (tasks.dragSource.parent !== above.parent) {
                 return;
@@ -110,14 +119,14 @@ DropArea {
             return;
         }
 
-        // Reject plasmoid drops.
-        if (event.formats.indexOf("text/x-plasmoidservicename") >= 0) {
+        if (DragTools.isWidgetOnly(event.formats, event.hasUrls)) {
             event.accepted = false;
             return;
         }
 
         if (event.hasUrls) {
             urlsDropped(event.urls);
+            event.acceptProposedAction();
             return;
         }
     }
@@ -169,6 +178,10 @@ DropArea {
         enabled: handleWheelEvents && Plasmoid.configuration.wheelEnabled !== 0
 
         onWheel: event => {
+            if (!dropArea.isGroupDialog && dropArea.target.widgetAt(event.x, event.y)) {
+                event.accepted = false;
+                return;
+            }
             // magic number 15 for common "one scroll"
             // See https://doc.qt.io/qt-6/qml-qtquick-wheelhandler.html#rotation-prop
             let increment = 0;
@@ -180,7 +193,9 @@ DropArea {
                 rotation += 15;
                 increment--;
             }
-            const anchor = dropArea.target.childAt(event.x, event.y);
+            const anchor = dropArea.isGroupDialog
+                ? dropArea.target.itemAt(event.x, event.y)
+                : dropArea.target.taskAt(event.x, event.y);
             if (Plasmoid.configuration.wheelEnabled === 3) {
                 const loudest = anchor?.audioStreams?.reduce((loudest, stream) => Math.max(loudest, stream.volume), 0)
                 const step = (pulseAudio.item.normalVolume - pulseAudio.item.minimalVolume) * pulseAudio.item.globalConfig.volumeStep / 100;

@@ -81,16 +81,8 @@ sudo apt install wavetask
 
 ## Compile from source
 
-- Install the development packages.
-- Download the code from GitHub.
-
-mkdir build && cd build
-
-cmake .. -DCMAKE_BUILD_TYPE=Release
-
-make -j$(nproc)
-
-sudo make install
+See [INSTALL.md](INSTALL.md) for dependency installation, clean build, and
+installation commands for Kubuntu/Ubuntu and Fedora.
 
 ## Global keyboard shortcuts
 
@@ -108,6 +100,7 @@ Task cycling and moving shortcuts are also available under the **Wave Task Manag
 
 ## Features:
 
+- Entry editor with drag handles, launchers, manual commands, spacers and separators
 - It inherits all the features of Plasma's task manager
 - Zoom like in macOS
 - Icon reflection
@@ -119,6 +112,39 @@ Task cycling and moving shortcuts are also available under the **Wave Task Manag
 - Option to disable icon reflection
 - blur for default and custom skins
 - Cairo Penguin ( only in landscape mode )
+
+## Entry editor
+
+Open **Configure WaveTask → Entries**. Existing pinned applications are included
+automatically. The tabs are ordered **Appearance → Entries → Behavior**.
+Drag the visible handles to reorder entries: a floating preview follows the
+pointer and a highlighted line marks the drop position. The up/down buttons
+provide an alternative. The list accepts:
+
+- **Spacers:** empty space with an adjustable size (1–256 pixels).
+- **Separators:** a subtle line with an adjustable reserved width/height.
+- **Manual entries:** a name, executable with arguments, and icon name or path.
+- **.desktop launchers:** import one or more files using the file picker or drop
+  them onto the list, including local files outside the application catalogue.
+
+Manual commands accept quoted arguments, not shell operators or substitutions.
+They are independent launch buttons; use a `.desktop` launcher for normal task
+and window integration. Use the edit/remove buttons to change manual entries or
+delete entries, and **Apply** to save. Cancelling configuration leaves the dock
+unchanged.
+
+Once an entry layout is saved, it determines the pinned entries' visual order
+instead of the Behavior sorting option or direct task-button dragging. Unpinned
+windows follow the configured entries. Spacers and separators reserve space in
+both orientations and during zoom; they are not Plasma widgets.
+
+## Previously embedded widgets
+
+Widget-addition menus and widget drops into WaveTask have been removed.
+Existing embedded widgets and their settings remain intact. The **Manage embedded
+widgets...** menu has also been removed. In Plasma's edit mode, right-click an
+existing embedded widget to configure or remove it. The internal containment package remains
+installed for this backward compatibility.
 
 Skins:
 

@@ -13,6 +13,13 @@
 // Can't be `let`, or else QML counterpart won't be able to assign to it.
 var taskManagerInstanceCount = 0;
 
+function currentDesktopForScreen(virtualDesktopInfo, screenGeometry) {
+    if (typeof virtualDesktopInfo.currentDesktopByScreenGeometry === "function") {
+        return virtualDesktopInfo.currentDesktopByScreenGeometry(screenGeometry);
+    }
+    return virtualDesktopInfo.currentDesktop;
+}
+
 function activateNextPrevTask(anchor, next, wheelSkipMinimized, wheelEnabled, tasks) {
     // FIXME TODO: Unnecessarily convoluted and costly; optimize.
 
@@ -42,8 +49,9 @@ function activateNextPrevTask(anchor, next, wheelSkipMinimized, wheelEnabled, ta
     let taskIndexList = [];
     const activeTaskIndex = tasks.tasksModel.activeTask;
 
-    for (let i = 0; i < tasks.taskList.children.length - 1; ++i) {
-        const task = tasks.taskList.children[i];
+    for (let i = 0; i < tasks.taskRepeater.count; ++i) {
+        const task = tasks.taskRepeater.itemAt(i);
+        if (!task) continue;
         const modelIndex = task.modelIndex(i);
 
         if (!task.model.IsLauncher && !task.model.IsStartup) {
@@ -116,9 +124,47 @@ function groupTopTask(childTaskList, attribute, tasks) {
     return topTaskIndex;
 }
 
+function normalizedAppId(appId) {
+    return String(appId || "").replace(/\.desktop$/i, "");
+}
+
+function matchingRunningTask(model, tasks) {
+    const appId = normalizedAppId(model.AppId);
+    const launcherUrl = tasks.backend.tryDecodeApplicationsUrl(model.LauncherUrlWithoutIcon).toString();
+    const modelCount = tasks.tasksModel.count;
+
+    for (let i = 0; i < modelCount; ++i) {
+        const index = tasks.tasksModel.makeModelIndex(i);
+        const isGroup = tasks.tasksModel.data(index, TaskManager.AbstractTasksModel.IsGroupParent);
+        const childCount = isGroup ? tasks.tasksModel.rowCount(index) : 1;
+
+        for (let child = 0; child < childCount; ++child) {
+            const childIndex = isGroup ? tasks.tasksModel.makeModelIndex(i, child) : index;
+            if (!tasks.tasksModel.data(childIndex, TaskManager.AbstractTasksModel.IsWindow)) {
+                continue;
+            }
+
+            const candidateAppId = normalizedAppId(tasks.tasksModel.data(childIndex, TaskManager.AbstractTasksModel.AppId));
+            const candidateUrl = tasks.backend.tryDecodeApplicationsUrl(
+                tasks.tasksModel.data(childIndex, TaskManager.AbstractTasksModel.LauncherUrlWithoutIcon)
+            ).toString();
+
+            if ((appId && candidateAppId === appId) || (launcherUrl && candidateUrl === launcherUrl)) {
+                return index;
+            }
+        }
+    }
+
+    return null;
+}
+
 function activateTask(index, model, modifiers, task, plasmoid, tasks, windowViewAvailable) {
     if (modifiers & Qt.ShiftModifier) {
-        tasks.tasksModel.requestNewInstance(index);
+        if (model.IsLauncher) {
+            tasks.backend.launchApplication(model.LauncherUrlWithoutIcon);
+        } else {
+            tasks.tasksModel.requestNewInstance(index);
+        }
         return;
     }
     // Publish delegate geometry again if there are more than one task manager instance
@@ -207,6 +253,16 @@ function activateTask(index, model, modifiers, task, plasmoid, tasks, windowView
             }
         }
     } else {
+        if (model.IsLauncher) {
+            const runningTask = matchingRunningTask(model, tasks);
+            if (runningTask !== null) {
+                tasks.tasksModel.requestActivate(runningTask);
+            } else {
+                tasks.backend.launchApplication(model.LauncherUrlWithoutIcon);
+            }
+            return;
+        }
+
         if (model.IsMinimized) {
             tasks.tasksModel.requestToggleMinimized(index);
             tasks.tasksModel.requestActivate(index);

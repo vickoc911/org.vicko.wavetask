@@ -71,6 +71,7 @@ export CXXFLAGS="%{optflags} -I%{_vpath_builddir}/plugin"
 %{_libdir}/qt6/qml/org/vicko/wavetask/
 
 %{_datadir}/plasma/plasmoids/org.vicko.wavetask/
+%{_datadir}/plasma/plasmoids/org.vicko.wavetask.widgets/
 
 %dir %{_datadir}/plasma/layout-templates
 %{_datadir}/plasma/layout-templates/org.vicko.wavetask.panel/

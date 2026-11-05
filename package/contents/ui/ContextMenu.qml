@@ -19,6 +19,7 @@ import org.kde.plasma.private.mpris as Mpris
 import org.vicko.wavetask as TaskManagerApplet
 
 import "code/LayoutMetrics.js" as LayoutMetrics
+import "code/TaskTools.js" as TaskTools
 
 PlasmaExtras.Menu {
     id: menu
@@ -281,7 +282,13 @@ PlasmaExtras.Menu {
         text: i18nc("action:inmenu", "Open New Window")
         icon: "window-new"
 
-        onClicked: tasksModel.requestNewInstance(menu.modelIndex)
+        onClicked: {
+            if (menu.get(TaskManager.AbstractTasksModel.IsLauncher)) {
+                backend.launchApplication(menu.get(TaskManager.AbstractTasksModel.LauncherUrlWithoutIcon));
+            } else {
+                tasksModel.requestNewInstance(menu.modelIndex);
+            }
+        }
     }
 
     PlasmaExtras.MenuItem {
@@ -331,17 +338,17 @@ PlasmaExtras.Menu {
                     }
 
                     let isAnyTaskNotOnCurrentDesktop = false;
-                    TaskManagerApplet.TaskTools.foreachChildTask((childIndex) => {
+                    TaskTools.foreachChildTask((childIndex) => {
                         const screenGeometry = tasksModel.data(childIndex, TaskManager.AbstractTasksModel.ScreenGeometry);
-                        const currentDesktop = virtualDesktopInfo.currentDesktopByScreenGeometry(screenGeometry);
+                        const currentDesktop = TaskTools.currentDesktopForScreen(virtualDesktopInfo, screenGeometry);
                         isAnyTaskNotOnCurrentDesktop = isAnyTaskNotOnCurrentDesktop || tasksModel.data(childIndex, TaskManager.AbstractTasksModel.VirtualDesktops).indexOf(currentDesktop) === -1;
                     }, menu.modelIndex, tasksModel);
 
                     return isAnyTaskNotOnCurrentDesktop;
                 });
                 menuItem.clicked.connect(() => {
-                    TaskManagerApplet.TaskTools.foreachChildTask((childIndex) => {
-                        tasksModel.requestVirtualDesktops(childIndex, [virtualDesktopInfo.currentDesktopByScreenGeometry(tasksModel.data(childIndex, TaskManager.AbstractTasksModel.ScreenGeometry))]);
+                    TaskTools.foreachChildTask((childIndex) => {
+                        tasksModel.requestVirtualDesktops(childIndex, [TaskTools.currentDesktopForScreen(virtualDesktopInfo, tasksModel.data(childIndex, TaskManager.AbstractTasksModel.ScreenGeometry))]);
                     }, menu.modelIndex, tasksModel);
                 });
 

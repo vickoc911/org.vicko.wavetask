@@ -14,6 +14,7 @@
 #include <QQuickItem>
 #include <QRect>
 #include <QSet>
+#include <QVariantMap>
 
 #include <netwm.h>
 #include <qqmlregistration.h>
@@ -73,6 +74,10 @@ public:
     Q_INVOKABLE QRect globalRect(QQuickItem *item) const;
 
     Q_INVOKABLE bool isApplication(const QUrl &url) const;
+    Q_INVOKABLE bool launchApplication(const QUrl &launcherUrl) const;
+    Q_INVOKABLE QVariantMap desktopEntry(const QUrl &url) const;
+    Q_INVOKABLE QString validateCommand(const QString &command) const;
+    Q_INVOKABLE bool launchCommand(const QString &command) const;
 
     Q_INVOKABLE qint64 parentPid(qint64 pid) const;
 

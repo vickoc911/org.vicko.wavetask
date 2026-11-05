@@ -47,6 +47,7 @@ KCMUtils.SimpleKCM {
     property alias cfg_showReflection: showReflection.checked
 
     property alias cfg_cairoPenguinEnabled: cairoPenguinEnabled.checked
+    property alias cfg_cairoPenguinSize: cairoPenguinSize.value
 
     Component.onCompleted: {
         /* Don't rely on bindings for checking the radiobuttons
@@ -342,8 +343,20 @@ KCMUtils.SimpleKCM {
 
         QQC2.CheckBox {
             id: cairoPenguinEnabled
-            Kirigami.FormData.label: "Show Cairo Penguin:"
+            Kirigami.FormData.label: i18n("Show Cairo Penguin:")
             checked: Plasmoid.configuration.cairoPenguinEnabled
+        }
+        QQC2.SpinBox {
+            id: cairoPenguinSize
+            Kirigami.FormData.label: i18n("Cairo Penguin size (%):")
+            enabled: cairoPenguinEnabled.checked
+            from: 25
+            to: 300
+            stepSize: 5
+            value: 100
+            editable: true
+            QQC2.ToolTip.text: i18n("100% keeps the default size relative to the application icons.")
+            QQC2.ToolTip.visible: hovered
         }
     }
 }
