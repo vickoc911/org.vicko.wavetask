@@ -15,27 +15,108 @@ KCMUtils.SimpleKCM {
     property string cfg_entryLayout: "[]"
     property var cfg_launchers: []
     property var entries: []
+    property var desktopMetadata: ({})
+    property var entryModel: entries.map(entry => displayEntry(entry, desktopMetadata))
     property string error: ""
     property bool updating: false
 
+    function displayEntry(entry, metadataByUrl) {
+        const display = {
+            entry: entry,
+            url: entry.url || "",
+            path: "",
+            mainLabel: "",
+            altLabel: "",
+            icon: "",
+            isLink: false
+        };
+        if (entry.type === "launcher") {
+            display.url = DockEntries.launcherUrl(entry.url);
+            const metadata = metadataByUrl[entry.url] || {};
+            display.mainLabel = metadata.name || metadata.title || metadata.description || metadata.comment || display.url;
+            display.path = metadata.path || "";
+            display.altLabel = escapeFilePath(display.path);
+            display.icon = metadata.icon || "application-x-executable";
+            display.isLink = true;
+        } else if (entry.type === "command") {
+            display.mainLabel = entry.title;
+            display.altLabel = entry.command;
+            display.icon = entry.icon || "application-x-executable";
+        } else if (entry.type === "spacer") {
+            display.mainLabel = i18n("Spacer");
+        } else if (entry.type === "separator") {
+            display.mainLabel = i18n("Separator");
+            display.icon = "insert-horizontal-rule";
+        }
+        return display;
+    }
+    function launcherEntry(entry) {
+        return {type: "launcher", url: entry.url};
+    }
+    function entriesWithoutDesktopMetadata(next) {
+        return next.map(entry => entry.type === "launcher" ? launcherEntry(entry) : entry);
+    }
+    function copyDesktopMetadata(entry) {
+        return {
+            name: entry.name || "",
+            title: entry.title || "",
+            description: entry.description || "",
+            comment: entry.comment || "",
+            path: entry.path || "",
+            icon: entry.icon || ""
+        };
+    }
+    function refreshDesktopMetadata(next) {
+        const metadata = {};
+        const errors = [];
+        for (const entry of next) {
+            if (entry.type !== "launcher") continue;
+            const desktopEntry = backend.desktopEntryMetadata(DockEntries.launcherUrl(entry.url));
+            if (desktopEntry.error) errors.push(desktopEntry.error);
+            else if (Object.keys(desktopEntry).length > 0) metadata[entry.url] = copyDesktopMetadata(desktopEntry);
+        }
+        desktopMetadata = metadata;
+        return errors.join("\n");
+    }
     function reload() {
         if (updating) return;
         try {
-            entries = DockEntries.reconcile(DockEntries.parse(cfg_entryLayout), cfg_launchers);
-            error = "";
+            entries = entriesWithoutDesktopMetadata(
+                DockEntries.reconcile(DockEntries.parse(cfg_entryLayout), cfg_launchers));
+            error = refreshDesktopMetadata(entries);
         } catch (exception) {
             error = i18n("Cannot read the entry layout: %1", exception.message);
         }
     }
     function save(next) {
         updating = true;
-        entries = next;
-        cfg_entryLayout = JSON.stringify(next);
-        cfg_launchers = DockEntries.launcherUrls(next);
+        entries = entriesWithoutDesktopMetadata(next);
+        cfg_entryLayout = JSON.stringify(entries);
+        cfg_launchers = DockEntries.launcherUrls(entries);
         updating = false;
     }
     function moveEntry(from, to) {
         save(DockEntries.move(entries, from, to));
+    }
+    function escapeFilePath(path) {
+        let escaped = "";
+        for (let index = 0; index < path.length; ++index) {
+            const character = path[index];
+            if (character === " ") escaped += "\\ ";
+            else if (character === "\t") escaped += "\\t";
+            else if (character === "\n") escaped += "\\n";
+            else if (character === "\r") escaped += "\\r";
+            else if (character === "\f") escaped += "\\f";
+            else if (character === "\v") escaped += "\\v";
+            else if (character === "\\") escaped += "\\\\";
+            else if ("$`\"'*?[]{}()!#&;|<>~".includes(character)) escaped += "\\" + character;
+            else if (/\s/.test(character) || character.charCodeAt(0) < 0x20 || character.charCodeAt(0) === 0x7f) {
+                const code = character.charCodeAt(0).toString(16);
+                escaped += "\\u" + ("0000" + code).slice(-4);
+            }
+            else escaped += character;
+        }
+        return escaped;
     }
     function importDesktop(url) {
         const entry = backend.desktopEntry(url);
@@ -43,12 +124,15 @@ KCMUtils.SimpleKCM {
             error = entry.error;
             return;
         }
-        if (entries.some(item => item.type === "launcher" && item.url === entry.url)) {
+        if (entries.some(item => item.type === "launcher"
+            && DockEntries.launcherUrl(item.url) === entry.url)) {
             error = i18n("This launcher is already in the list.");
             return;
         }
         error = "";
-        save(entries.concat([entry]));
+        const nextMetadata = Object.assign({}, desktopMetadata, {[entry.url]: copyDesktopMetadata(entry)});
+        desktopMetadata = nextMetadata;
+        save(entries.concat([launcherEntry(entry)]));
     }
     onCfg_entryLayoutChanged: reload()
     onCfg_launchersChanged: reload()
@@ -66,7 +150,7 @@ KCMUtils.SimpleKCM {
     }
 
     ColumnLayout {
-        width: parent.width
+        anchors.fill: parent
         Kirigami.InlineMessage {
             Layout.fillWidth: true
             visible: root.error.length > 0
@@ -109,7 +193,8 @@ KCMUtils.SimpleKCM {
         }
         DropArea {
             Layout.fillWidth: true
-            Layout.preferredHeight: entryList.height
+            Layout.fillHeight: true
+            Layout.minimumHeight: 0
             onDropped: event => {
                 if (event.hasUrls) {
                     for (const url of event.urls) root.importDesktop(url);
@@ -119,10 +204,9 @@ KCMUtils.SimpleKCM {
             ListView {
                 id: entryList
                 objectName: "entryEditorList"
-                width: parent.width
-                height: Math.min(contentHeight, Kirigami.Units.gridUnit * 22)
+                anchors.fill: parent
                 clip: true
-                model: root.entries
+                model: root.entryModel
                 spacing: Kirigami.Units.smallSpacing
                 property int dragSource: -1
                 property int dragDestination: -1
@@ -184,6 +268,7 @@ KCMUtils.SimpleKCM {
                     id: row
                     required property var modelData
                     required property int index
+                    readonly property var entry: modelData.entry
                     width: entryList.width
                     height: rowContent.implicitHeight + topPadding + bottomPadding
                     opacity: reorder.pressed ? 0.65 : 1
@@ -256,26 +341,48 @@ KCMUtils.SimpleKCM {
                         }
                         Kirigami.Icon {
                             id: entryIcon
-                            source: row.modelData.icon || (row.modelData.type === "separator"
-                                ? "insert-horizontal-rule" : "application-x-executable")
+                            source: row.modelData.icon
                             Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
                             Layout.preferredHeight: width
                         }
-                        QQC2.Label {
-                            id: entryTitle
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            elide: Text.ElideMiddle
-                            text: row.modelData.title || (row.modelData.type === "spacer" ? i18n("Spacer")
-                                : row.modelData.type === "separator" ? i18n("Separator") : row.modelData.url)
+                            spacing: 0
+                            QQC2.Label {
+                                id: entryTitle
+                                objectName: "entryTitle"
+                                Layout.fillWidth: true
+                                elide: Text.ElideMiddle
+                                text: row.modelData.mainLabel
+                            }
+                            QQC2.Label {
+                                id: entryPath
+                                objectName: "entryPath"
+                                Layout.fillWidth: true
+                                visible: row.modelData.altLabel.length > 0
+                                elide: Text.ElideMiddle
+                                font.pixelSize: Kirigami.Units.gridUnit * 0.75
+                                font.italic: true
+                                color: row.modelData.isLink
+                                    ? Kirigami.Theme.linkColor : Kirigami.Theme.disabledTextColor
+                                font.underline: row.modelData.isLink
+                                text: row.modelData.altLabel
+                                MouseArea {
+                                    anchors.fill: parent
+                                    enabled: row.modelData.isLink && parent.visible
+                                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                    onClicked: backend.showInFileManager(row.modelData.url)
+                                }
+                            }
                         }
                         QQC2.SpinBox {
-                            visible: ["spacer", "separator"].includes(row.modelData.type)
+                            visible: ["spacer", "separator"].includes(row.entry.type)
                             from: 1
                             to: 256
-                            value: row.modelData.size || 1
+                            value: row.entry.size || 1
                             onValueModified: {
                                 const next = root.entries.slice();
-                                next[row.index] = Object.assign({}, row.modelData, {size: value});
+                                next[row.index] = Object.assign({}, row.entry, {size: value});
                                 root.save(next);
                             }
                             QQC2.ToolTip.text: i18n("Size in pixels")
@@ -297,12 +404,12 @@ KCMUtils.SimpleKCM {
                         }
                         QQC2.ToolButton {
                             icon.name: "document-edit"
-                            visible: row.modelData.type === "command"
+                            visible: row.entry.type === "command"
                             onClicked: {
                                 manualDialog.editIndex = row.index;
-                                manualName.text = row.modelData.title;
-                                manualCommand.text = row.modelData.command;
-                                manualIcon.text = row.modelData.icon;
+                                manualName.text = row.entry.title;
+                                manualCommand.text = row.entry.command;
+                                manualIcon.text = row.entry.icon;
                                 manualDialog.open();
                             }
                         }

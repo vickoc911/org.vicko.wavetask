@@ -153,6 +153,46 @@ zoom, without creating Plasma widgets.
 Manual entries are independent launch buttons. For normal window integration,
 grouping, and application menus, prefer `.desktop` files.
 
+### Display and legacy launcher data
+
+Launcher rows display the name (or generic description/comment) above a smaller,
+italic local `.desktop` path. Click the path to reveal the file in the default
+file manager; KIO falls back to opening the parent directory when the standard
+`org.freedesktop.FileManager1` interface is unavailable. Path escapes are visual
+only. Commands appear below manual entry names; spacers and separators show only
+their type. The list adapts to the configuration window's height.
+
+Opening **Entries** refreshes every `.desktop` metadata copy in memory, including
+existing entries. The display cache is not written to `entryLayout`.
+Activity-prefixed values (`[activity-id]\nfile:///...`) are decoded for metadata
+lookup and folder opening without removing their saved activity association.
+Both real newlines and literal `\n` separators are supported. Empty launcher values
+are ignored; `preferred://...` entries are preserved without file metadata errors.
+
+### Technical information and configuration locations
+
+Open **Under the hood (no magic)** for selectable diagnostic information and
+configuration paths. The page reports the operating system, kernel, architecture,
+Qt version, display platform, and logging category `org.vicko.wavetask`.
+It contains technical information only; author/contributor credits remain in the
+package metadata.
+
+The usual locations are:
+
+- `~/.config/plasma-org.kde.plasma.desktop-appletsrc`: dock configuration, in
+  `[Containments][<containment-id>][Applets][<applet-id>][Configuration][General]`.
+  Find the applet whose `plugin` is `org.vicko.wavetask`; `launchers` contains
+  pinned launcher values and `entryLayout` contains the ordered JSON layout.
+- `~/.config/plasmashellrc`: Plasma shell configuration.
+- `~/.local/share/plasma/plasmoids/org.vicko.wavetask`: user-installed applet
+  package, if present. System-wide installations may not have this directory.
+
+The actual paths follow `XDG_CONFIG_HOME` and `XDG_DATA_HOME` through Qt's standard
+path APIs. Review local paths before sharing diagnostics. Back up configuration
+before editing it, and do not edit it while Plasma is running because the shell
+may overwrite your changes. After installing a rebuilt backend, log out and back
+in so Plasma loads the new native plugin, rather than only reopening configuration.
+
 ## Remove existing widgets
 
 Widget addition menus and embedding drops have been removed, along with the

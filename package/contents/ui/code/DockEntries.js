@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 .pragma library
 
+function launcherUrl(value) {
+    const activityPrefix = /^\[[^\]\r\n]*\](?:\r?\n|\\n)/;
+    return value.replace(activityPrefix, "");
+}
+
 function parse(text) {
     const entries = JSON.parse(text || "[]");
     if (!Array.isArray(entries)) throw new Error("Entry layout must be a list.");
@@ -22,14 +27,15 @@ function parse(text) {
 function reconcile(entries, launchers) {
     const result = [];
     const seen = new Set();
+    const validLaunchers = launchers.filter(url => typeof url === "string" && url.trim().length > 0);
     for (const entry of entries) {
         if (entry.type !== "launcher") result.push(entry);
-        else if (launchers.includes(entry.url) && !seen.has(entry.url)) {
+        else if (validLaunchers.includes(entry.url) && !seen.has(entry.url)) {
             result.push(entry);
             seen.add(entry.url);
         }
     }
-    for (const url of launchers) {
+    for (const url of validLaunchers) {
         if (!seen.has(url)) {
             result.push({type: "launcher", url: url});
             seen.add(url);

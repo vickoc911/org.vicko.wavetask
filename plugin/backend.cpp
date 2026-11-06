@@ -24,6 +24,7 @@
 #include <KApplicationTrader>
 #include <KIO/ApplicationLauncherJob>
 #include <KIO/CommandLauncherJob>
+#include <KIO/OpenFileManagerWindowJob>
 #include <KShell>
 
 #include <QAction>
@@ -31,6 +32,8 @@
 #include <QApplication>
 #include <QDir>
 #include <QFileSystemWatcher>
+#include <QFileInfo>
+#include <QGuiApplication>
 #include <QJsonArray>
 #include <QMenu>
 #include <QQuickItem>
@@ -38,6 +41,7 @@
 #include <QSet>
 #include <QSocketNotifier>
 #include <QStandardPaths>
+#include <QSysInfo>
 #include <QTimer>
 #include <QVersionNumber>
 
@@ -67,6 +71,20 @@ using namespace KAStats;
 using namespace KAStats::Terms;
 
 static constexpr int NoApplications = 2; // kactivitymanager StatsPlugin WhatToRemember.
+
+static QUrl localDesktopEntryUrl(const QUrl &url)
+{
+    const QUrl decoded = Backend::tryDecodeApplicationsUrl(url);
+    if (decoded.isLocalFile()) {
+        return decoded;
+    }
+
+    if (decoded.scheme().isEmpty() && decoded.toString().startsWith(QLatin1Char('/'))) {
+        return QUrl::fromLocalFile(decoded.toString(QUrl::FullyDecoded));
+    }
+
+    return decoded;
+}
 
 QVector<Backend *> Backend::s_instances;
 
@@ -349,19 +367,114 @@ QUrl Backend::tryDecodeApplicationsUrl(const QUrl &launcherUrl)
 
 QVariantMap Backend::desktopEntry(const QUrl &url) const
 {
-    const QUrl local = tryDecodeApplicationsUrl(url);
+    const QUrl local = localDesktopEntryUrl(url);
     if (local.isLocalFile() && KDesktopFile::isDesktopFile(local.toLocalFile())) {
+        const KDesktopFile desktopFile(local.toLocalFile());
         const KService service(local.toLocalFile());
         if (service.isValid() && service.isApplication() && !service.exec().isEmpty()) {
             return {{QStringLiteral("type"), QStringLiteral("launcher")},
                 {QStringLiteral("url"), url.toString()},
-                {QStringLiteral("title"), service.name()},
+                {QStringLiteral("title"), desktopFile.readName()},
+                {QStringLiteral("description"), desktopFile.readGenericName()},
+                {QStringLiteral("comment"), desktopFile.readComment()},
+                {QStringLiteral("path"), local.toLocalFile()},
                 {QStringLiteral("icon"), service.icon()}};
         }
     }
     const QString error = i18n("Cannot import %1: select a valid Application .desktop file.", url.toDisplayString());
     qCWarning(WAVETASK_DEBUG) << error;
     return {{QStringLiteral("error"), error}};
+}
+
+QVariantMap Backend::desktopEntryMetadata(const QUrl &url) const
+{
+    if (!url.isValid() || url.isEmpty()) {
+        return {};
+    }
+
+    const QUrl local = localDesktopEntryUrl(url);
+    if (url.scheme() != QLatin1String("applications")
+        && (!local.isLocalFile() || !KDesktopFile::isDesktopFile(local.toLocalFile()))) {
+        return {};
+    }
+
+    QString desktopPath = local.isLocalFile() ? local.toLocalFile() : QString();
+    KService::Ptr service;
+    if (!desktopPath.isEmpty()) {
+        service = KService::serviceByDesktopPath(desktopPath);
+    }
+    if (!service && url.scheme() == QLatin1String("applications")) {
+        service = KService::serviceByMenuId(url.path());
+    }
+    if (service && service->isValid() && !service->entryPath().isEmpty()) {
+        desktopPath = service->entryPath();
+    }
+
+    const QFileInfo fileInfo(desktopPath);
+    if (fileInfo.isFile() && KDesktopFile::isDesktopFile(desktopPath)) {
+        const KDesktopFile desktopFile(desktopPath);
+        const QString name = desktopFile.readName();
+        const QString description = desktopFile.readGenericName();
+        const QString comment = desktopFile.readComment();
+        const QString icon = desktopFile.readIcon();
+        return {
+            {QStringLiteral("url"), url.toString()},
+            {QStringLiteral("name"), name.isEmpty() && service ? service->name() : name},
+            {QStringLiteral("title"), name.isEmpty() && service ? service->name() : name},
+            {QStringLiteral("description"), description.isEmpty() && service ? service->genericName() : description},
+            {QStringLiteral("comment"), comment.isEmpty() && service ? service->comment() : comment},
+            {QStringLiteral("path"), desktopPath},
+            {QStringLiteral("icon"), icon.isEmpty() && service ? service->icon() : icon},
+        };
+    }
+
+    if (service && service->isValid()) {
+        return {
+            {QStringLiteral("url"), url.toString()},
+            {QStringLiteral("name"), service->name()},
+            {QStringLiteral("title"), service->name()},
+            {QStringLiteral("description"), service->genericName()},
+            {QStringLiteral("comment"), service->comment()},
+            {QStringLiteral("path"), service->entryPath()},
+            {QStringLiteral("icon"), service->icon()},
+        };
+    }
+
+    const QString error = i18n("Cannot read metadata for %1: select a valid .desktop file.", url.toDisplayString());
+    qCWarning(WAVETASK_DEBUG) << error;
+    return {{QStringLiteral("error"), error}};
+}
+
+QVariantMap Backend::debugInformation() const
+{
+    const QString configDirectory = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
+    const QString dataDirectory = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+    return {
+        {QStringLiteral("operatingSystem"), QSysInfo::prettyProductName()},
+        {QStringLiteral("kernel"), QSysInfo::kernelVersion()},
+        {QStringLiteral("architecture"), QSysInfo::currentCpuArchitecture()},
+        {QStringLiteral("qtVersion"), QString::fromLatin1(qVersion())},
+        {QStringLiteral("platform"), QGuiApplication::platformName()},
+        {QStringLiteral("plasmaConfiguration"), QDir(configDirectory).filePath(QStringLiteral("plasma-org.kde.plasma.desktop-appletsrc"))},
+        {QStringLiteral("shellConfiguration"), QDir(configDirectory).filePath(QStringLiteral("plasmashellrc"))},
+        {QStringLiteral("userPackageDirectory"), QDir(dataDirectory).filePath(QStringLiteral("plasma/plasmoids/org.vicko.wavetask"))},
+        {QStringLiteral("loggingCategory"), QStringLiteral("org.vicko.wavetask")},
+    };
+}
+
+bool Backend::showInFileManager(const QUrl &launcherUrl) const
+{
+    const QUrl desktopEntryUrl = localDesktopEntryUrl(launcherUrl);
+    if (!desktopEntryUrl.isValid() || !desktopEntryUrl.isLocalFile()) {
+        qCWarning(WAVETASK_DEBUG) << "Cannot show non-local launcher in file manager:" << launcherUrl;
+        return false;
+    }
+
+    auto *job = new KIO::OpenFileManagerWindowJob;
+    job->setHighlightUrls({desktopEntryUrl});
+    job->setUiDelegate(new KNotificationJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled));
+    job->start();
+    return true;
 }
 
 QString Backend::validateCommand(const QString &command) const

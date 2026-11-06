@@ -6,6 +6,23 @@ Since Plasma 6.6 does not allow direct access to org.kde.plasma.private.taskmana
 
 ![wavetask](screenshot/wavetask_1280_2.webp?raw=true "wavetask")
 
+## Technical information
+
+The **Under the hood (no magic)** configuration page includes operating system,
+kernel, architecture,
+Qt version, display platform, and logging category information, together with the
+Plasma configuration and user package locations. Paths follow the user's XDG
+configuration and data directories. Review local paths before sharing diagnostics.
+
+Dock entries are stored in `plasma-org.kde.plasma.desktop-appletsrc`, under the
+WaveTask applet's `Configuration/General` group (`launchers` and `entryLayout`).
+Desktop metadata is refreshed in memory when the Entries page loads. Do not edit
+Plasma configuration files while Plasma is running, as changes may be overwritten.
+
+Contributor: **Alan S. Ferreira** —
+[GitHub](https://github.com/alansferreira) ·
+[LinkedIn](https://www.linkedin.com/in/alansferreira/).
+
 ## Support for previous Plasma releases
 
 Currently supported versions: 6.6, 6.7
@@ -143,6 +160,7 @@ features and the recent desktop API compatibility fix.
 
 Open **Configure WaveTask → Entries**. Existing pinned applications are included
 automatically. The tabs are ordered **Appearance → Entries → Behavior**.
+The technical information tab, **Under the hood (no magic)**, follows **Behavior**.
 Drag the visible handles to reorder entries: a floating preview follows the
 pointer and a highlighted line marks the drop position. The up/down buttons
 provide an alternative. The list accepts:
@@ -158,6 +176,26 @@ They are independent launch buttons; use a `.desktop` launcher for normal task
 and window integration. Use the edit/remove buttons to change manual entries or
 delete entries, and **Apply** to save. Cancelling configuration leaves the dock
 unchanged.
+
+Launcher rows show the application name, falling back to its generic description,
+comment, and finally its URI. The second line shows the absolute local `.desktop`
+path in smaller italic text. Clicking it reveals the file in the default file
+manager using `org.freedesktop.FileManager1`; when unsupported, KIO opens the
+parent directory instead. No particular Linux distribution or file manager is required.
+Spaces and special characters are escaped for display only; the file path and
+opening target are not changed. Manual entries show their command below the name;
+spacers and separators show only their type, with a separate size control.
+The list grows and shrinks with the available window height and scrolls as needed.
+
+All `.desktop` metadata is re-read into a separate in-memory display model when
+the Entries page loads. Saved metadata from older layouts does not override the
+file's current values, and new layout saves do not include this display cache.
+Activity-qualified launcher values such as `[activity-id]\nfile:///...` are
+normalized for metadata lookup and folder opening, while their original activity
+association is preserved when saving. Both actual newlines and literal `\n`
+sequences are recognized. Empty launcher values are ignored, and special URLs
+such as `preferred://browser` remain valid without requiring `.desktop` metadata.
+Failures to read an expected `.desktop` file are reported in the configuration page.
 
 Once an entry layout is saved, it determines the pinned entries' visual order
 instead of the Behavior sorting option or direct task-button dragging. Unpinned

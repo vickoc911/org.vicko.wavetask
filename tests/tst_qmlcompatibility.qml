@@ -20,11 +20,25 @@ TestCase {
         verify(backend.launchApplication(Qt.resolvedUrl("fixtures/🟩 Local app.desktop")));
     }
 
+    function test_debugInformation() {
+        const backend = createTemporaryObject(backendComponent, this);
+        const info = backend.debugInformation();
+        verify(info.operatingSystem.length > 0);
+        verify(info.qtVersion.length > 0);
+        verify(info.platform.length > 0);
+        verify(info.plasmaConfiguration.startsWith("/"));
+        verify(info.plasmaConfiguration.endsWith("/plasma-org.kde.plasma.desktop-appletsrc"));
+        verify(info.shellConfiguration.endsWith("/plasmashellrc"));
+        verify(info.userPackageDirectory.endsWith("/plasma/plasmoids/org.vicko.wavetask"));
+        compare(info.loggingCategory, "org.vicko.wavetask");
+    }
+
     function test_components_data() {
         return [
             { tag: "main", file: "main.qml" },
             { tag: "embeddedWidget", file: "EmbeddedWidget.qml" },
             { tag: "entryEditor", file: "ConfigEntries.qml" },
+            { tag: "diagnostics", file: "ConfigDiagnostics.qml" },
             { tag: "dockEntry", file: "DockEntry.qml" },
             { tag: "cairoPenguin", file: "CairoPenguin.qml" },
             { tag: "badge", file: "TaskBadge.qml" },
@@ -79,6 +93,9 @@ TestCase {
     }
 
     function test_entryOrderAndPersistence() {
+        compare(DockEntries.launcherUrl("[activity-id]\nfile:///tmp/app.desktop"), "file:///tmp/app.desktop");
+        compare(DockEntries.launcherUrl("[activity-id]\\nfile:///tmp/app.desktop"), "file:///tmp/app.desktop");
+        compare(DockEntries.launcherUrl("file:///tmp/[folder]/app.desktop"), "file:///tmp/[folder]/app.desktop");
         const entries = [
             {type: "launcher", url: "file:///B.desktop"},
             {type: "separator", size: 12},
@@ -100,6 +117,8 @@ TestCase {
         compare(entries[0].url, "file:///B.desktop");
         compare(DockEntries.reconcile(entries, ["file:///B.desktop", "file:///C.desktop"])
             .map(entry => entry.type), ["launcher", "separator", "command", "spacer", "launcher"]);
+        compare(DockEntries.reconcile([], ["", "  ", "preferred://filemanager", "applications:editor.desktop"])
+            .map(entry => entry.url), ["preferred://filemanager", "applications:editor.desktop"]);
     }
 
     function test_entryValidation() {
@@ -154,6 +173,28 @@ TestCase {
         compare(entry.type, "launcher");
         verify(entry.url.includes(".desktop"));
         verify(entry.title.length > 0);
+        compare(entry.description, "Local app description");
+        compare(entry.comment, "Local app comment");
+        verify(entry.path.endsWith("/tests/fixtures/🟩 Local app.desktop"));
+        const metadata = backend.desktopEntryMetadata(entry.url);
+        compare(metadata.url, entry.url);
+        compare(metadata.name, "WaveTask local launcher test");
+        verify(metadata.path.endsWith("/tests/fixtures/🟩 Local app.desktop"));
+        const desktopUrl = Qt.resolvedUrl("fixtures/🟩 Local app.desktop").toString();
+        const rawDesktopPath = decodeURIComponent(desktopUrl.slice("file://".length));
+        const rawPathMetadata = backend.desktopEntryMetadata(rawDesktopPath);
+        compare(rawPathMetadata.name, "WaveTask local launcher test");
+        verify(rawPathMetadata.path.endsWith("/tests/fixtures/🟩 Local app.desktop"));
+        compare(backend.desktopEntry(rawDesktopPath).title, "WaveTask local launcher test");
+        compare(backend.desktopEntryMetadata("preferred://filemanager"), {});
+        compare(backend.desktopEntryMetadata(""), {});
+        verify(backend.desktopEntryMetadata(Qt.resolvedUrl("fixtures/missing.desktop")).error.length > 0);
+        const linkMetadata = backend.desktopEntryMetadata(Qt.resolvedUrl("fixtures/Legacy link.desktop"));
+        compare(linkMetadata.name, "Legacy desktop link");
+        compare(linkMetadata.description, "Legacy link description");
+        compare(linkMetadata.comment, "Legacy link comment");
+        verify(linkMetadata.path.endsWith("/tests/fixtures/Legacy link.desktop"));
+        compare(linkMetadata.icon, "folder");
         verify(backend.desktopEntry(Qt.resolvedUrl("fixtures/missing.desktop")).error.length > 0);
         compare(backend.validateCommand('/usr/bin/true "argument with spaces"'), "");
         verify(backend.validateCommand('echo hello | cat').length > 0);

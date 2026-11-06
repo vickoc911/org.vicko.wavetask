@@ -76,8 +76,11 @@ public:
     Q_INVOKABLE bool isApplication(const QUrl &url) const;
     Q_INVOKABLE bool launchApplication(const QUrl &launcherUrl) const;
     Q_INVOKABLE QVariantMap desktopEntry(const QUrl &url) const;
+    Q_INVOKABLE QVariantMap desktopEntryMetadata(const QUrl &url) const;
+    Q_INVOKABLE bool showInFileManager(const QUrl &launcherUrl) const;
     Q_INVOKABLE QString validateCommand(const QString &command) const;
     Q_INVOKABLE bool launchCommand(const QString &command) const;
+    Q_INVOKABLE QVariantMap debugInformation() const;
 
     Q_INVOKABLE qint64 parentPid(qint64 pid) const;
 

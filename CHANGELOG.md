@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-11-06 — Entry display and technical diagnostics
+
+- Added a separate display model with predefined main/secondary labels, icons,
+  original launcher targets, and absolute local `.desktop` paths.
+- Launcher rows prioritize name, generic description, and comment; manual commands
+  appear below their names, while spacers/separators show only their type.
+- Made the editor list adapt to available vertical space.
+- Added smaller italic path links that reveal files via KIO and the standard
+  Linux file-manager interface, with a parent-directory fallback.
+- Escaped spaces and special characters for display without changing file targets.
+- Refresh `.desktop` metadata in memory whenever Entries loads, independently of
+  cached fields in old layouts; keep the display cache out of new layout saves.
+- Normalized activity-prefixed launcher values for metadata and folder opening,
+  preserving activity associations and avoiding duplicate imports. Support real
+  newline and literal `\n` separators.
+- Added support for raw absolute local paths containing spaces and Unicode.
+- Preserve special `preferred://...` launchers, ignore empty launcher values, and
+  surface metadata read errors for expected `.desktop` files.
+- Added **Under the hood (no magic)** with copyable system/Qt diagnostics,
+  logging category, XDG-aware configuration paths, and configuration editing warnings.
+- Added Alan S. Ferreira to package credits, with GitHub and LinkedIn contacts in
+  the README; kept the technical diagnostics page free of authorship information.
+- Added regression coverage for activity prefixes, legacy metadata reloads,
+  special/empty launchers, display labels and paths, resizing, and diagnostics.
+
+## Earlier changes
+
 Recent improvements from 2026-11-05. This document does not replace the complete
 Git history or assign a new project version.
 

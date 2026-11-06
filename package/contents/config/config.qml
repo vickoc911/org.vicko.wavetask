@@ -24,4 +24,9 @@ ConfigModel {
          icon: "preferences-desktop"
          source: "ConfigBehavior.qml"
     }
+    ConfigCategory {
+         name: i18n("Under the hood (no magic)")
+         icon: "tools-report-bug"
+         source: "ConfigDiagnostics.qml"
+    }
 }
