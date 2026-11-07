@@ -14,11 +14,10 @@ import org.kde.plasma.core as PlasmaCore
 
 import "code/LayoutMetrics.js" as LayoutMetrics
 
-GridLayout {
+Item {
     property bool animating: false
 
-    rowSpacing: 0
-    columnSpacing: 0
+    property int flow: Grid.LeftToRight
 
     property int animationsRunning: 0
     onAnimationsRunningChanged: {
@@ -36,7 +35,7 @@ GridLayout {
         let min = Infinity;
         for (let i = 0; i < children.length; ++i) {
             const item = children[i];
-            if (item.visible && item.width > 0 && item.width < min) {
+            if (typeof item.modelIndex === "function" && item.visible && item.width > 0 && item.width < min) {
                 min = item.width;
             }
         }
@@ -69,6 +68,6 @@ GridLayout {
         return Math.ceil(count / stripeCount);
     }
 
-    rows: vertical ? orthogonalCount : stripeCount
-    columns: vertical ? stripeCount : orthogonalCount
+    readonly property int rows: vertical ? orthogonalCount : stripeCount
+    readonly property int columns: vertical ? stripeCount : orthogonalCount
 }

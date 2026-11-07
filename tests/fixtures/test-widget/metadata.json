@@ -1,0 +1,9 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.vicko.wavetask.testwidget",
+        "Name": "WaveTask test widget",
+        "License": "GPL-2.0-or-later"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

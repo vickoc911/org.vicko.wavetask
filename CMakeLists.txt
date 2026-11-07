@@ -28,7 +28,12 @@ find_package(KWin REQUIRED)
 
 add_subdirectory(plugin)
 plasma_install_package(package org.vicko.wavetask)
+plasma_install_package(widget-containment org.vicko.wavetask.widgets)
 install(DIRECTORY layout-templates/
         DESTINATION ${KDE_INSTALL_DATADIR}/plasma/layout-templates/org.vicko.wavetask.panel
 )
 
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()

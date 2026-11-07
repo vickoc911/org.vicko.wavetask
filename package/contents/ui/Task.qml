@@ -115,7 +115,7 @@ PlasmaCore.ToolTipArea {
         if (mousePos < 0) return 1.0;
 
         // Tamaño total SIN zoom
-        let totalSize = tasksRoot.taskRepeater.count * _baseSize;
+        let totalSize = tasksRoot.taskList.baseContentSize;
 
         // Área disponible según orientación
         let availableSize = tasks.vertical
@@ -126,7 +126,7 @@ PlasmaCore.ToolTipArea {
         let centerOffset = (availableSize - totalSize) / 2;
 
         // Centro del icono actual
-        let iconCenter = centerOffset + (index * _baseSize) + (_baseSize / 2);
+        let iconCenter = centerOffset + (tasksRoot.taskList.baseLayout.taskOffsets[index] ?? 0) + (_baseSize / 2);
 
         // Distancia mouse-icono
         let distance = Math.abs(mousePos - iconCenter);
@@ -432,7 +432,11 @@ PlasmaCore.ToolTipArea {
         onTapped: (eventPoint, button) => {
             if (button === Qt.MiddleButton) {
                 if (Plasmoid.configuration.middleClickAction === TaskManagerApplet.Backend.NewInstance) {
-                    tasksModel.requestNewInstance(modelIndex());
+                    if (model.IsLauncher) {
+                        tasksRoot.backend.launchApplication(model.LauncherUrlWithoutIcon);
+                    } else {
+                        tasksModel.requestNewInstance(modelIndex());
+                    }
                 } else if (Plasmoid.configuration.middleClickAction === TaskManagerApplet.Backend.Close) {
                     tasksModel.requestClose(modelIndex());
                 } else if (Plasmoid.configuration.middleClickAction === TaskManagerApplet.Backend.ToggleMinimized) {
@@ -440,8 +444,8 @@ PlasmaCore.ToolTipArea {
                 } else if (Plasmoid.configuration.middleClickAction === TaskManagerApplet.Backend.ToggleGrouping) {
                     tasksModel.requestToggleGrouping(modelIndex());
                 } else if (Plasmoid.configuration.middleClickAction === TaskManagerApplet.Backend.BringToCurrentDesktop) {
-                    TaskManagerApplet.TaskTools.foreachChildTask((childIndex) => {
-                        tasksModel.requestVirtualDesktops(childIndex, [virtualDesktopInfo.currentDesktopByScreenGeometry(tasksModel.data(childIndex, TaskManager.AbstractTasksModel.ScreenGeometry))]);
+                    TaskTools.foreachChildTask((childIndex) => {
+                        tasksModel.requestVirtualDesktops(childIndex, [TaskTools.currentDesktopForScreen(virtualDesktopInfo, tasksModel.data(childIndex, TaskManager.AbstractTasksModel.ScreenGeometry))]);
                     }, modelIndex(), tasksModel);
                 }
             } else if (button === Qt.BackButton || button === Qt.ForwardButton) {

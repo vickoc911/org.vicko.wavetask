@@ -15,8 +15,18 @@ ConfigModel {
          source: "ConfigAppearance.qml"
     }
     ConfigCategory {
+         name: i18n("Entries")
+         icon: "view-list-details"
+         source: "ConfigEntries.qml"
+    }
+    ConfigCategory {
          name: i18n("Behavior")
          icon: "preferences-desktop"
          source: "ConfigBehavior.qml"
+    }
+    ConfigCategory {
+         name: i18n("Under the hood (no magic)")
+         icon: "tools-report-bug"
+         source: "ConfigDiagnostics.qml"
     }
 }

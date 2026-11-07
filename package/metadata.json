@@ -5,6 +5,10 @@
             {
                 "Email": "victor.calles@gmail.com",
                 "Name": "Victor Calles"
+            },
+            {
+                "Name": "Alan S. Ferreira",
+                "Website": "https://github.com/alansferreira"
             }
         ],
         "BugReportUrl": "https://bugs.kde.org/enter_bug.cgi?product=plasmashell&component=Task%20Manager%20and%20Icons-Only%20Task%20Manager%20widgets",

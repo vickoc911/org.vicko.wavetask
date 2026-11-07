@@ -6,6 +6,23 @@ Since Plasma 6.6 does not allow direct access to org.kde.plasma.private.taskmana
 
 ![wavetask](screenshot/wavetask_1280_2.webp?raw=true "wavetask")
 
+## Technical information
+
+The **Under the hood (no magic)** configuration page includes operating system,
+kernel, architecture,
+Qt version, display platform, and logging category information, together with the
+Plasma configuration and user package locations. Paths follow the user's XDG
+configuration and data directories. Review local paths before sharing diagnostics.
+
+Dock entries are stored in `plasma-org.kde.plasma.desktop-appletsrc`, under the
+WaveTask applet's `Configuration/General` group (`launchers` and `entryLayout`).
+Desktop metadata is refreshed in memory when the Entries page loads. Do not edit
+Plasma configuration files while Plasma is running, as changes may be overwritten.
+
+Contributor: **Alan S. Ferreira** —
+[GitHub](https://github.com/alansferreira) ·
+[LinkedIn](https://www.linkedin.com/in/alansferreira/).
+
 ## Support for previous Plasma releases
 
 Currently supported versions: 6.6, 6.7
@@ -81,16 +98,11 @@ sudo apt install wavetask
 
 ## Compile from source
 
-- Install the development packages.
-- Download the code from GitHub.
+See [INSTALL.md](INSTALL.md) for dependency installation, clean build, and
+installation commands for Kubuntu/Ubuntu and Fedora.
 
-mkdir build && cd build
-
-cmake .. -DCMAKE_BUILD_TYPE=Release
-
-make -j$(nproc)
-
-sudo make install
+See [CHANGELOG.md](CHANGELOG.md) for a one-line summary of each recent change,
+followed by feature details and the corresponding commits.
 
 ## Global keyboard shortcuts
 
@@ -108,6 +120,9 @@ Task cycling and moving shortcuts are also available under the **Wave Task Manag
 
 ## Features:
 
+- Window filtering by current virtual desktop, KDE Activity, and dock monitor
+- Optional minimized-only filtering, combinable with desktop, Activity, and monitor filters
+- Entry editor with drag handles, launchers, manual commands, spacers and separators
 - It inherits all the features of Plasma's task manager
 - Zoom like in macOS
 - Icon reflection
@@ -118,7 +133,97 @@ Task cycling and moving shortcuts are also available under the **Wave Task Manag
 - Option to select the amplitude
 - Option to disable icon reflection
 - blur for default and custom skins
-- Cairo Penguin ( only in landscape mode )
+- Cairo Penguin with configurable size (horizontal docks only)
+
+## Window filtering
+
+Open **Configure WaveTask → Behavior → Show only tasks** to choose which windows
+appear in each WaveTask instance:
+
+- **From the current desktop:** show windows belonging to the current virtual desktop.
+- **From the current activity:** show windows belonging to the active KDE Activity.
+- **From the current screen:** show windows on the monitor containing this dock,
+  not whichever monitor currently contains the pointer.
+- **That are minimized:** show only minimized windows.
+
+The options are independent and can be combined. For example, enabling desktop,
+Activity, and screen filtering limits the window list to those matching all three.
+Disabling a filter removes that restriction. Pinned application launchers remain
+configured separately in **Entries**; these options filter window tasks rather
+than deleting pinned entries.
+
+Desktop filtering selects the API supported by the installed Plasma version.
+See the [changelog](CHANGELOG.md) for the distinction between existing filtering
+features and the recent desktop API compatibility fix.
+
+## Entry editor
+
+Open **Configure WaveTask → Entries**. Existing pinned applications are included
+automatically. The tabs are ordered **Appearance → Entries → Behavior**.
+The technical information tab, **Under the hood (no magic)**, follows **Behavior**.
+Drag the visible handles to reorder entries: a floating preview follows the
+pointer and a highlighted line marks the drop position. The up/down buttons
+provide an alternative. The list accepts:
+
+- **Spacers:** empty space with an adjustable size (1–256 pixels).
+- **Separators:** a subtle line with an adjustable reserved width/height.
+- **Manual entries:** a name, executable with arguments, and icon name or path.
+- **.desktop launchers:** import one or more files using the file picker or drop
+  them onto the list, including local files outside the application catalogue.
+
+Manual commands accept quoted arguments, not shell operators or substitutions.
+They are independent launch buttons; use a `.desktop` launcher for normal task
+and window integration. Use the edit/remove buttons to change manual entries or
+delete entries, and **Apply** to save. Cancelling configuration leaves the dock
+unchanged.
+
+Launcher rows show the application name, falling back to its generic description,
+comment, and finally its URI. The second line shows the absolute local `.desktop`
+path in smaller italic text. Clicking it reveals the file in the default file
+manager using `org.freedesktop.FileManager1`; when unsupported, KIO opens the
+parent directory instead. No particular Linux distribution or file manager is required.
+Spaces and special characters are escaped for display only; the file path and
+opening target are not changed. Manual entries show their command below the name;
+spacers and separators show only their type, with a separate size control.
+The list grows and shrinks with the available window height and scrolls as needed.
+
+All `.desktop` metadata is re-read into a separate in-memory display model when
+the Entries page loads. Saved metadata from older layouts does not override the
+file's current values, and new layout saves do not include this display cache.
+Activity-qualified launcher values such as `[activity-id]\nfile:///...` are
+normalized for metadata lookup and folder opening, while their original activity
+association is preserved when saving. Both actual newlines and literal `\n`
+sequences are recognized. Empty launcher values are ignored, and special URLs
+such as `preferred://browser` remain valid without requiring `.desktop` metadata.
+Failures to read an expected `.desktop` file are reported in the configuration page.
+
+Once an entry layout is saved, it determines the pinned entries' visual order
+instead of the Behavior sorting option or direct task-button dragging. Unpinned
+windows follow the configured entries. Spacers and separators reserve space in
+both orientations and during zoom; they are not Plasma widgets.
+
+Dragging `.desktop` files directly onto the active dock is still supported.
+New launchers are appended to the configured entries and can then be reordered
+in the editor. Only Plasma widget embedding drops are disabled; URL drops take
+priority even when a drag also advertises widget metadata.
+
+## Cairo Penguin size
+
+Open **Configure WaveTask → Appearance**, enable **Show Cairo Penguin**, and
+adjust **Cairo Penguin size (%)** from **25% to 300%**, then click **Apply**.
+The default **100%** preserves the previous size: two thirds of the application
+icon size. The control is disabled while the penguin is turned off.
+
+The Cairo Penguin remains available only on horizontal docks. Larger sizes may
+require increasing the panel height to avoid clipping the animation.
+
+## Previously embedded widgets
+
+Widget-addition menus and widget drops into WaveTask have been removed.
+Existing embedded widgets and their settings remain intact. The **Manage embedded
+widgets...** menu has also been removed. In Plasma's edit mode, right-click an
+existing embedded widget to configure or remove it. The internal containment
+package remains installed for this backward compatibility.
 
 Skins:
 

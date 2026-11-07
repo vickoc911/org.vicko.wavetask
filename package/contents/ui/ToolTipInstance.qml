@@ -175,7 +175,7 @@ ColumnLayout {
                 Layout.preferredWidth: closeButton.width
                 visible: root.index === 0 && toolTipDelegate.smartLauncherCountVisible
 
-                Kirigami.Badge {
+                TaskBadge {
                     anchors.centerIn: parent
                     text: toolTipDelegate.smartLauncherCount
                 }

@@ -72,7 +72,7 @@ Item {
         onHeightChanged: maskShaderSource.scheduleUpdate()
     }
 
-    Kirigami.Badge {
+    TaskBadge {
         id: badgeRect
 
         anchors.right: parent.right

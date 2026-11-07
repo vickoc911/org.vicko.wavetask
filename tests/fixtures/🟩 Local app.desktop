@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=WaveTask local launcher test
+GenericName=Local app description
+Comment=Local app comment
+Exec=/usr/bin/true
+Terminal=false
+StartupNotify=false

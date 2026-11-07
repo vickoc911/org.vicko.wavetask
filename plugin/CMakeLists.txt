@@ -25,6 +25,7 @@ find_package(KF6 REQUIRED COMPONENTS
 
 # Workspace libs
 find_package(Plasma REQUIRED)
+find_package(PlasmaQuick REQUIRED)
 find_package(PlasmaActivities REQUIRED)
 find_package(PlasmaActivitiesStats REQUIRED)
 find_package(LibTaskManager REQUIRED)
@@ -38,6 +39,8 @@ set(wavetask_source
     plugin.cpp
     backend.cpp
     backend.h
+    widgethost.cpp
+    widgethost.h
     smartlauncherbackend.cpp
     smartlauncherbackend.h
     smartlauncheritem.cpp
@@ -100,7 +103,7 @@ target_link_libraries(wavetask
         KF6::GlobalAccel
         KF6::XmlGui
         KF6::KIOCore KF6::KIOGui KF6::KIOFileWidgets KF6::Bookmarks
-        Plasma::Plasma Plasma::Activities Plasma::ActivitiesStats
+        Plasma::Plasma Plasma::PlasmaQuick Plasma::Activities Plasma::ActivitiesStats
         PW::LibTaskManager PW::LibNotificationManager
         KSysGuard::ProcessCore
 )

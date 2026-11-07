@@ -105,6 +105,10 @@
       <label>The list of launcher tasks on the widget. Usually .desktop file or executable URLs. Special URLs such as preferred://browser that expand to default applications are supported.</label>
       <default>applications:systemsettings.desktop,applications:org.kde.discover.desktop,preferred://filemanager,preferred://browser</default>
     </entry>
+    <entry name="entryLayout" type="String">
+      <label>Ordered launchers, manual commands, spacers and separators edited in the Entries configuration page.</label>
+      <default>[]</default>
+    </entry>
     <entry name="middleClickAction" type="Enum">
       <label>What to do on middle-mouse click on a task button.</label>
       <choices>
@@ -173,6 +177,12 @@
     <entry name="cairoPenguinEnabled" type="Bool">
       <default>false</default>
     </entry>
+    <entry name="cairoPenguinSize" type="Int">
+      <label>Cairo Penguin size as a percentage of its default size.</label>
+      <default>100</default>
+      <min>25</min>
+      <max>300</max>
+    </entry>
     <entry name="showOnMetaKey" type="Bool">
       <label>Whether pressing the Meta/Win key should temporarily show the dock when it is hidden.</label>
       <default>true</default>
@@ -184,4 +194,3 @@
   </group>
 
 </kcfg>
-

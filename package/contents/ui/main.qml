@@ -7,6 +7,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls as QQC2
 
 import org.kde.plasma.plasmoid
 import org.kde.plasma.components as PlasmaComponents3
@@ -23,6 +24,8 @@ import org.kde.plasma.workspace.dbus as DBus
 
 import "code/LayoutMetrics.js" as LayoutMetrics
 import "code/TaskTools.js" as TaskTools
+import "code/DockLayout.js" as DockLayout
+import "code/DockEntries.js" as DockEntries
 
 PlasmoidItem {
     id: tasks
@@ -33,7 +36,32 @@ PlasmoidItem {
     // to fix that (see Task.qml and GroupDialog.qml).
     rotation: Plasmoid.configuration.reverseMode && Plasmoid.formFactor === PlasmaCore.Types.Vertical ? 180 : 0
 
-    readonly property bool shouldShrinkToZero: tasksModel.count === 0
+    readonly property bool shouldShrinkToZero: tasksModel.count === 0 && widgetHost.entries.length === 0
+        && !orderedEntries.some(entry => entry.type !== "launcher")
+    readonly property var parsedEntryLayout: {
+        try {
+            return {entries: DockEntries.reconcile(DockEntries.parse(Plasmoid.configuration.entryLayout),
+                Plasmoid.configuration.launchers), error: ""};
+        } catch (exception) {
+            console.error("WaveTask entry layout:", exception.message);
+            return {entries: [], error: i18n("Cannot read the entry layout: %1", exception.message)};
+        }
+    }
+    readonly property var orderedEntries: parsedEntryLayout.entries
+    onParsedEntryLayoutChanged: {
+        if (parsedEntryLayout.error.length > 0) entryLayoutErrorDialog.open();
+    }
+    PlasmaComponents3.Dialog {
+        id: entryLayoutErrorDialog
+        title: i18n("WaveTask entries")
+        standardButtons: PlasmaComponents3.Dialog.Ok
+        contentItem: PlasmaComponents3.Label {
+            text: tasks.parsedEntryLayout.error
+            wrapMode: Text.Wrap
+        }
+    }
+    readonly property bool hasEntryLayout: Plasmoid.configuration.entryLayout !== "[]"
+        && Plasmoid.configuration.entryLayout.length > 0
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
     readonly property bool iconsOnly: Plasmoid.pluginName === "org.vicko.wavetask"
 
@@ -45,6 +73,112 @@ PlasmoidItem {
 
     property alias taskList: taskList
     property alias taskRepeater: taskRepeater
+
+    function showWidgetManager(): void {
+        widgetManager.visible = true;
+    }
+
+    PlasmaCore.PopupPlasmaWindow {
+        id: widgetManager
+        objectName: "widgetManager"
+        title: i18n("Embedded widgets")
+        visualParent: tasks
+        width: widgetManagerContent.width + leftPadding + rightPadding
+        height: widgetManagerContent.implicitHeight + topPadding + bottomPadding
+        popupDirection: {
+            switch (Plasmoid.location) {
+            case PlasmaCore.Types.TopEdge: return Qt.BottomEdge;
+            case PlasmaCore.Types.LeftEdge: return Qt.RightEdge;
+            case PlasmaCore.Types.RightEdge: return Qt.LeftEdge;
+            default: return Qt.TopEdge;
+            }
+        }
+        mainItem: ColumnLayout {
+            id: widgetManagerContent
+            width: Kirigami.Units.gridUnit * 26
+            Keys.onEscapePressed: widgetManager.visible = false
+            PlasmaComponents3.Label {
+                text: i18n("Embedded widgets")
+                font.bold: true
+            }
+            PlasmaComponents3.Label {
+                Layout.fillWidth: true
+                visible: Plasmoid.immutability !== PlasmaCore.Types.Mutable
+                text: i18n("Enter Plasma edit mode to unlock widgets before removing them.")
+                wrapMode: Text.Wrap
+            }
+            PlasmaComponents3.Label {
+                visible: widgetHost.entries.length === 0
+                text: i18n("No embedded widgets.")
+            }
+            QQC2.ScrollView {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(widgetRows.implicitHeight, Kirigami.Units.gridUnit * 14)
+                visible: widgetHost.entries.length > 0
+                clip: true
+                contentWidth: availableWidth
+                ColumnLayout {
+                    id: widgetRows
+                    width: parent.width
+                    Repeater {
+                        objectName: "embeddedWidgetRows"
+                        model: widgetHost.entries
+                        delegate: RowLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            PlasmaComponents3.Label {
+                                Layout.fillWidth: true
+                                text: modelData.title
+                                elide: Text.ElideRight
+                            }
+                            PlasmaComponents3.ToolButton {
+                                icon.name: "configure"
+                                text: i18n("Configure")
+                                display: QQC2.AbstractButton.IconOnly
+                                onClicked: widgetHost.configureWidget(modelData.id)
+                                QQC2.ToolTip.text: text
+                                QQC2.ToolTip.visible: hovered
+                            }
+                            PlasmaComponents3.Button {
+                                objectName: "removeEmbeddedWidget"
+                                icon.name: "edit-delete"
+                                text: i18n("Remove")
+                                enabled: Plasmoid.immutability === PlasmaCore.Types.Mutable
+                                onClicked: widgetHost.removeWidget(modelData.id)
+                            }
+                        }
+                    }
+                }
+            }
+            PlasmaComponents3.Button {
+                Layout.alignment: Qt.AlignRight
+                text: i18n("Close")
+                onClicked: widgetManager.visible = false
+            }
+        }
+    }
+
+    TaskManagerApplet.WidgetHost {
+        id: widgetHost
+        owner: Plasmoid
+    }
+
+    PlasmaComponents3.Dialog {
+        id: widgetErrorDialog
+        title: i18n("WaveTask widgets")
+        standardButtons: PlasmaComponents3.Dialog.Ok
+        contentItem: PlasmaComponents3.Label {
+            text: widgetHost.error
+            wrapMode: Text.Wrap
+        }
+    }
+
+    Connections {
+        target: widgetHost
+        function onErrorChanged() {
+            if (widgetHost.error.length > 0) widgetErrorDialog.open();
+        }
+    }
 
     readonly property bool metaKeyHeld: backend.metaKeyHeld
     readonly property bool metaFeaturesEnabled: Plasmoid.configuration.showOnMetaKey
@@ -216,13 +350,13 @@ PlasmoidItem {
         if (shouldShrinkToZero) {
             return Kirigami.Units.gridUnit; // For edit mode
         }
-        return vertical ? 0 : LayoutMetrics.preferredMinWidth();
+        return vertical ? 0 : taskList.contentSize;
     }
     Layout.minimumHeight: {
         if (shouldShrinkToZero) {
             return Kirigami.Units.gridUnit; // For edit mode
         }
-        return !vertical ? 0 : LayoutMetrics.preferredMinHeight();
+        return !vertical ? 0 : taskList.contentSize;
     }
 
 //BEGIN TODO: this is not precise enough: launchers are smaller than full tasks
@@ -275,14 +409,14 @@ PlasmoidItem {
         return DBus.SessionBus.asyncCall({service: "org.kde.KWin.Effect.WindowView1", path: "/org/kde/KWin/Effect/WindowView1", iface: "org.kde.KWin.Effect.WindowView1", member: "activate", arguments: [winIds.map(s => String(s))], signature: "(as)"});
     }
 
-    function publishIconGeometries(taskItems: /*list<Item>*/var): void {
+    function publishIconGeometries(): void {
         if (TaskTools.taskManagerInstanceCount >= 2) {
             return;
         }
-        for (let i = 0; i < taskItems.length - 1; ++i) {
-            const task = taskItems[i];
+        for (let i = 0; i < taskRepeater.count; ++i) {
+            const task = taskRepeater.itemAt(i);
 
-            if (!task.model.IsLauncher && !task.model.IsStartup) {
+            if (task && !task.model.IsLauncher && !task.model.IsStartup) {
                 tasksModel.requestPublishDelegateGeometry(tasksModel.makeModelIndex(task.index),
                     backend.globalRect(task), task);
             }
@@ -315,14 +449,14 @@ PlasmoidItem {
         screenGeometry: Plasmoid.containment.screenGeometry
         activity: activityInfo.currentActivity
 
-        filterByCurrentVirtualDesktop: Plasmoid.configuration.showOnlyCurrentDesktop
         filterByScreen: Plasmoid.configuration.showOnlyCurrentScreen
         filterByActivity: Plasmoid.configuration.showOnlyCurrentActivity
         filterNotMinimized: Plasmoid.configuration.showOnlyMinimized
 
         hideActivatedLaunchers: tasks.iconsOnly || Plasmoid.configuration.hideLauncherOnStart
-        sortMode: sortModeEnumValue(Plasmoid.configuration.sortingStrategy)
-        launchInPlace: tasks.iconsOnly && Plasmoid.configuration.sortingStrategy === 1
+        sortMode: tasks.hasEntryLayout ? TaskManager.TasksModel.SortManual
+            : sortModeEnumValue(Plasmoid.configuration.sortingStrategy)
+        launchInPlace: tasks.iconsOnly && (tasks.hasEntryLayout || Plasmoid.configuration.sortingStrategy === 1)
         separateLaunchers: {
             if (!tasks.iconsOnly && !Plasmoid.configuration.separateLaunchers
                 && Plasmoid.configuration.sortingStrategy === 1) {
@@ -379,6 +513,7 @@ PlasmoidItem {
         }
 
         Component.onCompleted: {
+            if (parsedEntryLayout.error.length > 0) entryLayoutErrorDialog.open();
             launcherList = Plasmoid.configuration.launchers;
             groupingAppIdBlacklist = Plasmoid.configuration.groupingAppIdBlacklist;
             groupingLauncherUrlBlacklist = Plasmoid.configuration.groupingLauncherUrlBlacklist;
@@ -386,6 +521,19 @@ PlasmoidItem {
             // Only hook up view only after the above churn is done.
             taskRepeater.model = tasksModel;
         }
+    }
+
+    Binding {
+        target: tasksModel
+        property: "filterByCurrentVirtualDesktop" in tasksModel
+            ? "filterByCurrentVirtualDesktop" : "filterByVirtualDesktop"
+        value: Plasmoid.configuration.showOnlyCurrentDesktop
+    }
+
+    Binding {
+        target: "virtualDesktop" in tasksModel ? tasksModel : null
+        property: "virtualDesktop"
+        value: virtualDesktopInfo.currentDesktop
     }
 
     readonly property TaskManagerApplet.Backend backend: TaskManagerApplet.Backend {
@@ -499,7 +647,7 @@ PlasmoidItem {
             repeat: false
 
             onTriggered: {
-                tasks.publishIconGeometries(taskList.children, tasks);
+                tasks.publishIconGeometries();
             }
         }
 
@@ -507,7 +655,7 @@ PlasmoidItem {
             target: Plasmoid
             property: "status"
             value: {
-                if (tasks.metaShowActive) {
+                if (tasks.metaShowActive || widgetHost.needsAttention) {
                     return PlasmaCore.Types.NeedsAttentionStatus;
                 }
                 if (tasksModel.anyTaskDemandsAttention && Plasmoid.configuration.unhideOnAttention) {
@@ -966,10 +1114,10 @@ PlasmoidItem {
 
             TaskList {
                 id: taskList
+                count: taskRepeater.count
 
                 property real smoothMouse: -1
                 property bool insideDock: false
-                property alias animating: taskList.animating
                 readonly property real spacing: Kirigami.Units.smallSpacing
                 readonly property real _baseSize: Plasmoid.configuration.iconSize
                 readonly property real _sigma: _baseSize * Plasmoid.configuration.amplitud
@@ -979,32 +1127,46 @@ PlasmoidItem {
                 readonly property real _zoom: (Plasmoid.configuration.magnification || 0) / 100
                 readonly property real maxZoom: 1.0 + (Plasmoid.configuration.magnification || 0) / 100
 
-                readonly property real baseContentSize: taskRepeater.count * Plasmoid.configuration.iconSize + Math.max(0, taskRepeater.count - 1) * spacing
+                readonly property var widgetSizes: {
+                    const sizes = [];
+                    for (let i = 0; i < widgetRepeater.count; ++i) {
+                        const item = widgetRepeater.itemAt(i);
+                        if (item) sizes.push({ position: item.entry.position, size: item.length });
+                    }
+                    return sizes;
+                }
+
+                readonly property var taskUrls: {
+                    const urls = [];
+                    for (let i = 0; i < taskRepeater.count; ++i) {
+                        const item = taskRepeater.itemAt(i);
+                        const url = item?.model?.LauncherUrlWithoutIcon;
+                        const position = url ? tasksModel.launcherPosition(url) : -1;
+                        urls.push(position >= 0 ? tasksModel.launcherList[position] : String(url || ""));
+                    }
+                    return urls;
+                }
+                readonly property var baseLayout: tasks.hasEntryLayout
+                    ? DockEntries.arrange(Array(taskRepeater.count).fill(Plasmoid.configuration.iconSize),
+                        taskUrls, tasks.orderedEntries, widgetSizes, _baseSize, spacing)
+                    : DockLayout.arrange(Array(taskRepeater.count).fill(Plasmoid.configuration.iconSize), widgetSizes, spacing)
+                readonly property var currentLayout: {
+                    const sizes = [];
+                    for (let i = 0; i < taskRepeater.count; ++i) {
+                        const item = taskRepeater.itemAt(i);
+                        sizes.push(item ? (tasks.vertical ? item.height : item.width) : Plasmoid.configuration.iconSize);
+                    }
+                    return tasks.hasEntryLayout
+                        ? DockEntries.arrange(sizes, taskUrls, tasks.orderedEntries, widgetSizes, _baseSize, spacing)
+                        : DockLayout.arrange(sizes, widgetSizes, spacing);
+                }
+                readonly property real baseContentSize: baseLayout.length
 
                 // Integral gaussiana aproximada
-                readonly property real zoomExtraSize: _zoom * _sigma * Math.sqrt(2 * Math.PI)
+                readonly property real zoomExtraSize: _zoom * (_sigma * Math.sqrt(2 * Math.PI) + _baseSize)
 
                 property real contentSize: Math.ceil(baseContentSize + zoomExtraSize + spacing * 4)
-
-               readonly property real iconsTotalSize: {
-                   let total = 0;
-
-                   for (let i = 0; i < taskRepeater.count; ++i) {
-                       let item = taskRepeater.itemAt(i);
-
-                       if (item) {
-
-                           total += tasks.vertical
-                           ? item.height
-                           : item.width;
-
-                           if (i > 0)
-                               total += spacing;
-                       }
-                   }
-
-                   return total;
-               }
+                readonly property real iconsTotalSize: currentLayout.length
 
                readonly property real centerOffset: {
                    let availableSize = tasks.vertical
@@ -1016,6 +1178,40 @@ PlasmoidItem {
 
                 Layout.maximumWidth: contentSize
                 Layout.maximumHeight: contentSize
+
+                function insertionPosition(coordinate) {
+                    for (let i = 0; i < taskRepeater.count; ++i) {
+                        const item = taskRepeater.itemAt(i);
+                        const size = tasks.vertical ? item.height : item.width;
+                        if (coordinate < item.itemPos + size / 2) return i;
+                    }
+                    return taskRepeater.count;
+                }
+
+                function taskAt(x, y) {
+                    for (let i = 0; i < taskRepeater.count; ++i) {
+                        const item = taskRepeater.itemAt(i);
+                        if (item && x >= item.x && x < item.x + item.width
+                            && y >= item.y && y < item.y + item.height) return item;
+                    }
+                    return null;
+                }
+
+                function widgetAt(x, y) {
+                    for (let i = 0; i < entryRepeater.count; ++i) {
+                        const item = entryRepeater.itemAt(i);
+                        if (item && item.visible && x >= item.x && x < item.x + item.width
+                            && y >= item.y && y < item.y + item.height) return item;
+                    }
+                    for (let i = 0; i < widgetRepeater.count; ++i) {
+                        const item = widgetRepeater.itemAt(i);
+                        if (item && x >= item.x && x < item.x + item.width
+                            && y >= item.y && y < item.y + item.height) return item;
+                    }
+                    return null;
+                }
+
+                onCurrentLayoutChanged: tasks.requestLayout()
 
                 width: {
                     if (tasks.vertical) {
@@ -1046,7 +1242,7 @@ PlasmoidItem {
 
                 onAnimatingChanged: {
                     if (!animating) {
-                        tasks.publishIconGeometries(children, tasks);
+                        tasks.publishIconGeometries();
                     }
                 }
 
@@ -1054,9 +1250,7 @@ PlasmoidItem {
                     id: dockHoverHandler
 
                     onPointChanged: {
-                        let mappedPos = taskList.mapToItem(tasks, point.position.x, point.position.y)
-
-                        let mousePos = tasks.vertical ? mappedPos.y : mappedPos.x
+                        let mousePos = tasks.vertical ? point.position.y : point.position.x
 
                         if (taskList.smoothMouse < 0) {
                             taskList.smoothMouse = mousePos
@@ -1117,23 +1311,7 @@ PlasmoidItem {
                             return 0;
                         }
 
-                        property real itemPos: {
-                            let pos = taskList.centerOffset;
-
-                            for (let i = 0; i < index; ++i) {
-                                let previousItem = taskRepeater.itemAt(i);
-
-                                let size = previousItem
-                                ? (tasks.vertical
-                                ? previousItem.height
-                                : previousItem.width)
-                                : Plasmoid.configuration.iconSize;
-
-                                pos += size + taskList.spacing;
-                            }
-
-                            return pos;
-                        }
+                        property real itemPos: taskList.centerOffset + (taskList.currentLayout.taskOffsets[index] ?? 0)
 
                         width: tasks.vertical
                         ? Plasmoid.configuration.iconSize
@@ -1142,6 +1320,43 @@ PlasmoidItem {
                         height: tasks.vertical
                         ? (Plasmoid.configuration.iconSize * zoomFactor)
                         : undefined
+                    }
+                }
+
+                Repeater {
+                    id: entryRepeater
+                    model: tasks.hasEntryLayout ? tasks.orderedEntries : []
+                    delegate: DockEntry {
+                        required property var modelData
+                        required property int index
+                        entry: modelData
+                        backend: tasks.backend
+                        vertical: tasks.vertical
+                        iconSize: Plasmoid.configuration.iconSize
+                        rotation: tasks.rotation
+                        readonly property real offset: taskList.centerOffset
+                            + (taskList.currentLayout.entryOffsets?.[index] ?? 0)
+                        x: tasks.vertical ? (taskList.width - width) / 2 : offset
+                        y: tasks.vertical ? offset : (taskList.height - height) / 2
+                    }
+                }
+
+                Repeater {
+                    id: widgetRepeater
+                    model: widgetHost.entries
+                    delegate: EmbeddedWidget {
+                        required property var modelData
+                        required property int index
+                        entry: modelData
+                        host: widgetHost
+                        vertical: tasks.vertical
+                        rotation: tasks.rotation
+                        iconSize: Plasmoid.configuration.iconSize
+                        taskCount: taskRepeater.count
+                        editing: Plasmoid.containment.corona.editMode && Plasmoid.immutability === PlasmaCore.Types.Mutable
+                        readonly property real offset: taskList.centerOffset + (taskList.currentLayout.widgetOffsets[index] ?? 0)
+                        x: tasks.vertical ? (taskList.width - width) / 2 : offset
+                        y: tasks.vertical ? offset : (tasks.isTopPanel ? 0 : tasks.height - height)
                     }
                 }
             }
@@ -1308,6 +1523,7 @@ PlasmoidItem {
     }
 
     Component.onCompleted: {
+        if (widgetHost.error.length > 0) widgetErrorDialog.open();
         TaskTools.taskManagerInstanceCount += 1;
         requestLayout.connect(iconGeometryTimer.restart);
         applyBackgroundHint();

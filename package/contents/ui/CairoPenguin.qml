@@ -5,9 +5,13 @@ import "code/CairoPenguin.js" as Penguin
 
 Item {
     id: cairoPenguinRoot
+    objectName: "cairoPenguin"
 
-    width: Plasmoid.configuration.iconSize * 2 / 3
-    height: Plasmoid.configuration.iconSize * 2 / 3
+    property real iconSize: Plasmoid.configuration.iconSize
+    property int sizePercent: Plasmoid.configuration.cairoPenguinSize
+
+    width: iconSize * 2 / 3 * Math.max(25, Math.min(300, sizePercent)) / 100
+    height: width
 
     opacity: 0.777
 
