@@ -19,6 +19,7 @@ import org.kde.plasma.private.mpris as Mpris
 import org.vicko.wavetask as TaskManagerApplet
 
 import "code/LayoutMetrics.js" as LayoutMetrics
+import "code/TaskTools.js" as TaskTools
 
 PlasmaExtras.Menu {
     id: menu
@@ -331,7 +332,7 @@ PlasmaExtras.Menu {
                     }
 
                     let isAnyTaskNotOnCurrentDesktop = false;
-                    TaskManagerApplet.TaskTools.foreachChildTask((childIndex) => {
+                    TaskTools.foreachChildTask((childIndex) => {
                         const screenGeometry = tasksModel.data(childIndex, TaskManager.AbstractTasksModel.ScreenGeometry);
                         const currentDesktop = virtualDesktopInfo.currentDesktopByScreenGeometry(screenGeometry);
                         isAnyTaskNotOnCurrentDesktop = isAnyTaskNotOnCurrentDesktop || tasksModel.data(childIndex, TaskManager.AbstractTasksModel.VirtualDesktops).indexOf(currentDesktop) === -1;
@@ -340,7 +341,7 @@ PlasmaExtras.Menu {
                     return isAnyTaskNotOnCurrentDesktop;
                 });
                 menuItem.clicked.connect(() => {
-                    TaskManagerApplet.TaskTools.foreachChildTask((childIndex) => {
+                    TaskTools.foreachChildTask((childIndex) => {
                         tasksModel.requestVirtualDesktops(childIndex, [virtualDesktopInfo.currentDesktopByScreenGeometry(tasksModel.data(childIndex, TaskManager.AbstractTasksModel.ScreenGeometry))]);
                     }, menu.modelIndex, tasksModel);
                 });

@@ -17,7 +17,7 @@ import org.kde.plasma.components as PlasmaComponents3
 import org.kde.kirigami as Kirigami
 import org.vicko.wavetask as TaskManagerApplet
 import org.kde.plasma.plasmoid
-import org.vicko.wavetask as TaskManager
+import org.kde.taskmanager as TaskManager
 
 import "code/LayoutMetrics.js" as LayoutMetrics
 import "code/TaskTools.js" as TaskTools
@@ -440,7 +440,7 @@ PlasmaCore.ToolTipArea {
                 } else if (Plasmoid.configuration.middleClickAction === TaskManagerApplet.Backend.ToggleGrouping) {
                     tasksModel.requestToggleGrouping(modelIndex());
                 } else if (Plasmoid.configuration.middleClickAction === TaskManagerApplet.Backend.BringToCurrentDesktop) {
-                    TaskManagerApplet.TaskTools.foreachChildTask((childIndex) => {
+                    TaskTools.foreachChildTask((childIndex) => {
                         tasksModel.requestVirtualDesktops(childIndex, [virtualDesktopInfo.currentDesktopByScreenGeometry(tasksModel.data(childIndex, TaskManager.AbstractTasksModel.ScreenGeometry))]);
                     }, modelIndex(), tasksModel);
                 }
